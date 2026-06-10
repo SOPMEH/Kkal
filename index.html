@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>ккал — дневник питания</title>
+<meta name="theme-color" content="#FFFFFF">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ккал">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600&family=Golos+Text:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --accent: #1E9E5A;
+    --warn: #E0633C;
+    --ink: #16191C;
+    --muted: #8A9199;
+    --surface: #F5F6F4;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Golos Text', system-ui, sans-serif;
+    background: #fff; color: var(--ink);
+    max-width: 480px; margin: 0 auto;
+    padding-top: env(safe-area-inset-top);
+    overscroll-behavior-y: none;
+  }
+  button { cursor: pointer; font-family: inherit; border: none; background: none; color: inherit; }
+  input { font-family: inherit; outline: none; border: none; }
+  ::-webkit-scrollbar { display: none; }
+
+  .header { padding: 20px 20px 8px; display: flex; align-items: center; justify-content: space-between; }
+  .h-date { text-align: left; padding: 0; }
+  .h-title { font-size: 22px; font-weight: 600; letter-spacing: -0.3px; }
+  .h-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .h-actions { display: flex; gap: 8px; }
+  .chip { background: var(--surface); border-radius: 14px; padding: 8px 14px; font-size: 13px; font-weight: 500; }
+
+  .week { display: flex; gap: 6px; padding: 12px 16px 4px; }
+  .wday { flex: 1; border-radius: 16px; padding: 10px 0 8px; display: flex; flex-direction: column; align-items: center; gap: 3px; transition: background .15s; }
+  .wday.sel { background: var(--ink); color: #fff; }
+  .wday .wd { font-size: 11px; color: var(--muted); }
+  .wday.sel .wd { color: rgba(255,255,255,.6); }
+  .wday .dn { font-size: 16px; font-weight: 600; }
+  .wday .dot { width: 5px; height: 5px; border-radius: 5px; }
+
+  .summary { display: flex; align-items: center; gap: 20px; padding: 16px 24px 8px; }
+  .ringwrap { position: relative; width: 190px; height: 190px; flex-shrink: 0; }
+  .ringwrap svg { transform: rotate(-90deg); }
+  .ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .big-num { font-family: 'Unbounded', sans-serif; font-size: 34px; font-weight: 600; letter-spacing: -1px; line-height: 1; }
+  .ring-sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .macros { flex: 1; display: flex; flex-direction: column; gap: 14px; }
+  .macro-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
+  .macro-row .lbl { color: var(--muted); }
+  .macro-row b { font-weight: 600; }
+  .macro-row .of { color: var(--muted); font-weight: 400; }
+  .bar { height: 5px; background: var(--surface); border-radius: 5px; }
+  .bar > div { height: 5px; border-radius: 5px; transition: width .5s; }
+
+  .meals { padding: 12px 16px 40px; }
+  .meal { background: var(--surface); border-radius: 22px; padding: 16px 16px 12px; margin-bottom: 12px; }
+  .meal-head { display: flex; align-items: center; justify-content: space-between; }
+  .meal-title { font-size: 16px; font-weight: 600; }
+  .meal-kcal { font-size: 13px; color: var(--muted); margin-left: 8px; }
+  .add-btn { width: 30px; height: 30px; border-radius: 10px; background: var(--ink); color: #fff; font-size: 18px; line-height: 28px; }
+  .item { display: flex; justify-content: space-between; align-items: center; width: 100%; background: #fff; border-radius: 14px; padding: 11px 14px; margin-top: 6px; text-align: left; }
+  .item-name { font-size: 14px; font-weight: 500; }
+  .item-g { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .item-k { font-size: 14px; font-weight: 600; }
+  .meal-empty { font-size: 12.5px; color: var(--muted); margin-top: 8px; }
+  .footnote { text-align: center; font-size: 11.5px; color: #B6BCC2; padding: 8px 24px 24px; }
+
+  .overlay { position: fixed; inset: 0; background: rgba(20,24,28,.45); z-index: 50; animation: fade .2s; display: flex; align-items: flex-end; }
+  .sheet { background: #fff; border-radius: 26px 26px 0 0; animation: rise .25s ease; max-height: 88vh; width: 100%; max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; overflow: hidden; padding-bottom: env(safe-area-inset-bottom); }
+  .grab { width: 38px; height: 4px; background: #E3E6E9; border-radius: 4px; margin: 10px auto 0; flex-shrink: 0; }
+  .sheet-body { padding: 14px 20px 24px; overflow-y: auto; }
+  .sheet-title { font-size: 18px; font-weight: 600; margin-bottom: 14px; }
+  @keyframes rise { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+
+  .tabs { display: flex; background: var(--surface); border-radius: 14px; padding: 4px; margin-bottom: 16px; }
+  .tab { flex: 1; border-radius: 11px; padding: 9px 0; font-size: 14px; font-weight: 500; color: var(--muted); transition: all .15s; }
+  .tab.on { background: #fff; color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+
+  .search-input { width: 100%; background: var(--surface); border-radius: 14px; padding: 13px 16px; font-size: 15px; margin-bottom: 12px; }
+  .food-row { display: flex; justify-content: space-between; align-items: center; width: 100%; border-bottom: 1px solid var(--surface); padding: 12px 4px; text-align: left; }
+  .food-name { font-size: 14.5px; font-weight: 500; }
+  .food-bju { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .food-k { font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .food-k b { color: var(--ink); font-size: 14px; }
+  .empty-msg { text-align: center; color: var(--muted); font-size: 14px; padding: 30px; }
+
+  .stepper { padding: 12px 18px; border-radius: 14px; font-size: 15px; font-weight: 600; background: var(--surface); }
+  .stepper.sm { padding: 7px 11px; border-radius: 10px; font-size: 12.5px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+  .grams-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 16px; }
+  .grams-num { font-family: 'Unbounded', sans-serif; font-size: 30px; font-weight: 600; }
+  .grams-lbl { font-size: 12px; color: var(--muted); }
+  .portions { display: flex; gap: 8px; margin-bottom: 20px; }
+  .portion { flex: 1; border-radius: 12px; padding: 10px 0; font-size: 13px; font-weight: 500; background: var(--surface); }
+  .portion.on { background: var(--ink); color: #fff; }
+  .portion span { font-size: 11px; opacity: .6; }
+
+  .primary { width: 100%; background: var(--accent); color: #fff; border-radius: 16px; padding: 15px 0; font-size: 15px; font-weight: 600; }
+  .primary.dark { background: var(--ink); }
+  .primary:disabled { opacity: .4; }
+  .ghost { width: 100%; color: var(--muted); padding: 12px 0; font-size: 13.5px; }
+  .danger { width: 100%; color: var(--warn); padding: 13px 0; font-size: 14px; font-weight: 500; }
+  .back-link { color: var(--muted); font-size: 13.5px; padding: 0 0 10px; display: block; }
+
+  .photo-drop { width: 100%; border: 2px dashed #D7DBDF; border-radius: 20px; padding: 44px 20px; text-align: center; }
+  .photo-emoji { font-size: 34px; margin-bottom: 10px; }
+  .photo-t { font-size: 15px; font-weight: 600; }
+  .photo-s { font-size: 13px; color: var(--muted); margin-top: 6px; }
+  .ai-item { background: var(--surface); border-radius: 16px; padding: 12px 14px; margin-bottom: 8px; }
+  .ai-item.off { opacity: .45; }
+  .ai-head { display: flex; justify-content: space-between; align-items: center; }
+  .ai-check { display: flex; align-items: center; gap: 10px; text-align: left; padding: 0; }
+  .cb { width: 22px; height: 22px; border-radius: 8px; flex-shrink: 0; background: #fff; border: 1.5px solid #D7DBDF; color: #fff; font-size: 14px; line-height: 22px; text-align: center; }
+  .cb.on { background: var(--accent); border: none; }
+  .ai-grams { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+  .ai-grams .g { flex: 1; text-align: center; font-size: 14px; font-weight: 600; }
+  .err { text-align: center; font-size: 14.5px; color: #C25036; margin: 20px 0 14px; }
+
+  .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .cal-arrow { background: var(--surface); border-radius: 12px; width: 38px; height: 38px; font-size: 16px; }
+  .cal-month { font-size: 17px; font-weight: 600; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
+  .cal-wd { text-align: center; font-size: 11.5px; color: var(--muted); padding: 4px 0; }
+  .cal-day { border-radius: 13px; background: var(--surface); padding: 9px 0 7px; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .cal-day.sel { background: var(--ink); color: #fff; }
+  .cal-day.today { box-shadow: inset 0 0 0 1.5px var(--ink); }
+  .cal-day.sel.today { box-shadow: none; }
+  .cal-day .n { font-size: 14px; font-weight: 600; }
+  .cal-day .d { width: 6px; height: 6px; border-radius: 6px; }
+  .legend { display: flex; gap: 16px; justify-content: center; margin-top: 16px; font-size: 12px; color: var(--muted); }
+  .legend i { display: inline-block; width: 7px; height: 7px; border-radius: 7px; margin-right: 5px; }
+
+  .set-label { font-size: 13px; font-weight: 600; margin: 16px 0 8px; }
+  .set-input { width: 100%; background: var(--surface); border-radius: 14px; padding: 13px 16px; font-size: 14px; }
+  .set-note { font-size: 12.5px; color: var(--muted); line-height: 1.5; margin-top: 8px; }
+  .set-note a { color: var(--accent); }
+  .provider-row { display: flex; gap: 8px; }
+  .provider-btn { flex: 1; border-radius: 12px; padding: 11px 0; font-size: 14px; font-weight: 500; background: var(--surface); }
+  .provider-btn.on { background: var(--ink); color: #fff; }
+  .goal-row { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 20px; }
+  .goal-num { font-family: 'Unbounded', sans-serif; font-size: 32px; font-weight: 600; min-width: 120px; text-align: center; }
+  .goal-presets { display: flex; gap: 8px; margin-bottom: 18px; }
+  .goal-presets button { flex: 1; border-radius: 12px; padding: 9px 0; font-size: 13px; font-weight: 500; background: var(--surface); }
+  .goal-presets button.on { background: var(--ink); color: #fff; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="sheet-root"></div>
+<input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none">
+
+<script>
+"use strict";
+
+// ───────────────── База продуктов: [название, ккал, Б, Ж, У на 100 г, порция г]
+const FOOD_DB = [
+["Гречка варёная",110,4.2,1.1,21,200],["Рис варёный",130,2.4,0.3,28,200],
+["Овсяная каша на молоке",102,3.2,4.1,14,250],["Овсяная каша на воде",88,3.0,1.7,15,250],
+["Макароны варёные",112,3.5,0.4,23,200],["Картофельное пюре",106,2.5,4.2,15,200],
+["Картофель варёный",82,2.0,0.4,17,150],["Картофель жареный",192,2.8,9.5,23,150],
+["Плов с курицей",165,9.0,6.0,19,250],["Плов со свининой",210,8.5,11,20,250],
+["Борщ",49,2.7,2.0,5.0,300],["Щи из свежей капусты",38,1.8,1.7,4.0,300],
+["Куриный суп с лапшой",55,3.5,1.9,6.0,300],["Солянка мясная",69,5.0,4.0,3.0,300],
+["Окрошка на кефире",60,3.3,2.5,6.0,300],["Пельмени отварные",245,11,12,23,200],
+["Вареники с картошкой",185,4.5,4.0,32,200],["Голубцы с мясом",145,7.0,8.0,11,250],
+["Котлета куриная",220,16,14,8.0,90],["Котлета говяжья",250,15,17,9.0,90],
+["Куриная грудка отварная",137,28,1.8,0.5,150],["Куриная грудка жареная",161,27,5.5,0.5,150],
+["Куриное бедро запечённое",200,21,12,0.5,130],["Говядина тушёная",180,22,10,1.0,150],
+["Свинина жареная",290,20,23,0.5,150],["Лосось запечённый",195,22,12,0.5,150],
+["Минтай жареный",115,18,4.5,1.0,150],["Селёдка солёная",215,17,16,0.5,60],
+["Сосиска молочная",260,11,23,2.0,55],["Колбаса докторская",257,13,22,1.5,40],
+["Колбаса копчёная",420,17,39,1.0,30],["Яйцо варёное",155,13,11,1.0,55],
+["Яичница из 2 яиц",200,13,16,1.0,110],["Омлет с молоком",165,10,13,2.5,150],
+["Творог 5%",120,17,5.0,2.0,150],["Творог 9%",159,16,9.0,2.0,150],
+["Сырники",230,14,9.0,24,150],["Сметана 20%",204,2.8,20,3.2,30],
+["Кефир 2,5%",50,2.9,2.5,4.0,250],["Молоко 3,2%",60,2.9,3.2,4.7,250],
+["Йогурт натуральный",66,4.3,3.2,6.0,150],["Сыр российский",364,23,30,0.3,30],
+["Сыр творожный",290,6.0,27,3.5,30],["Масло сливочное",748,0.5,82,0.8,10],
+["Майонез",627,2.8,67,3.7,20],["Хлеб белый",265,8.0,3.0,50,30],
+["Хлеб бородинский",208,6.8,1.3,41,35],["Батон нарезной",264,7.5,2.9,51,25],
+["Лаваш тонкий",275,9.0,1.0,56,60],["Блины",233,6.0,12,26,120],
+["Оладьи",213,6.3,7.4,31,120],["Сырок глазированный",407,9.0,24,38,50],
+["Оливье",198,5.5,16,8.0,150],["Селёдка под шубой",183,6.5,14,9.0,150],
+["Винегрет",76,1.6,3.0,10,150],["Греческий салат",90,2.5,7.0,4.0,200],
+["Салат Цезарь с курицей",190,12,12,9.0,200],["Салат огурцы-помидоры",50,1.0,3.0,4.0,150],
+["Шаурма с курицей",200,9.0,10,19,350],["Пицца Маргарита",240,10,8.0,32,125],
+["Пицца Пепперони",275,12,12,30,125],["Чизбургер",263,13,12,26,115],
+["Картофель фри",312,3.8,15,41,110],["Суши Филадельфия",150,7.0,5.5,18,35],
+["Банан",96,1.5,0.2,22,120],["Яблоко",47,0.4,0.4,10,150],
+["Апельсин",43,0.9,0.2,8.0,150],["Мандарин",38,0.8,0.2,7.5,70],
+["Виноград",65,0.6,0.2,16,100],["Огурец",15,0.8,0.1,2.8,100],
+["Помидор",20,1.1,0.2,3.7,120],["Морковь",32,1.3,0.1,6.9,80],
+["Авокадо",160,2.0,15,9.0,100],["Орехи грецкие",654,15,65,7.0,30],
+["Миндаль",609,19,54,13,30],["Шоколад молочный",535,7.0,30,59,25],
+["Шоколад тёмный",539,6.2,35,48,25],["Печенье овсяное",437,6.5,14,71,25],
+["Пряник",364,4.8,2.8,78,40],["Зефир",326,0.8,0.1,80,35],
+["Халва подсолнечная",523,12,30,54,40],["Мороженое пломбир",227,3.7,15,20,80],
+["Мёд",329,0.8,0,81,15],["Сахар",398,0,0,100,5],
+["Чай с сахаром",28,0,0,7.0,250],["Кофе с молоком",30,1.5,1.2,3.5,250],
+["Капучино",45,1.8,1.8,5.0,300],["Сок яблочный",46,0.4,0.1,11,250],
+["Кола",42,0,0,10.6,330],["Квас",27,0.2,0,5.2,300],
+["Компот из сухофруктов",60,0.4,0,15,250],["Гречневая лапша (соба)",99,5.0,0.6,21,200],
+["Бутерброд с колбасой",270,9.0,14,27,80],["Бутерброд с сыром",290,11,13,32,70],
+["Каша манная",98,3.0,3.2,15,250],["Каша пшённая",90,3.0,0.7,17,250],
+["Тушёная капуста",75,2.0,4.0,7.5,200],["Драники",268,4.5,17,24,150],
+["Беляш с мясом",290,9.0,16,28,100],["Чебурек",264,8.5,13,28,120],
+["Пирожок с капустой",245,5.0,9.0,36,75],
+].map((a,i)=>({id:"db"+i,name:a[0],kcal:a[1],p:a[2],f:a[3],c:a[4],portion:a[5]}));
+
+const MEALS=[
+ {id:"breakfast",label:"Завтрак"},{id:"lunch",label:"Обед"},
+ {id:"dinner",label:"Ужин"},{id:"snack",label:"Перекус"}];
+const MONTHS=["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+const MONTHS_NOM=["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
+const WD=["пн","вт","ср","чт","пт","сб","вс"];
+
+// ───────────────── Состояние и хранение
+const LS_KEY="kkal_v1";
+function load(){ try{ return JSON.parse(localStorage.getItem(LS_KEY))||{} }catch(e){ return {} } }
+let saved=load();
+let S={
+  goal: saved.goal||2200,
+  entries: saved.entries||{},          // {dateKey:[{id,mealId,name,grams,kcal100,p100,f100,c100}]}
+  provider: saved.provider||"groq",    // groq | gemini
+  apiKey: saved.apiKey||"",
+};
+function persist(){ localStorage.setItem(LS_KEY, JSON.stringify(S)); }
+
+let selected=new Date();
+let calView=null;
+let addCtx=null;   // {mealId, tab, query, picked:{food,grams}}
+let editCtx=null;  // {item}
+let aiCtx=null;    // {status, items, error}
+let goalTmp=null;
+
+// ───────────────── Утилиты
+const dk=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const same=(a,b)=>dk(a)===dk(b);
+const R=Math.round;
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+function dayItems(d){ return S.entries[dk(d)]||[]; }
+function dayKcal(d){ return dayItems(d).reduce((s,i)=>s+i.kcal100*i.grams/100,0); }
+function totals(d){ return dayItems(d).reduce((t,i)=>{const k=i.grams/100;t.kcal+=i.kcal100*k;t.p+=i.p100*k;t.f+=i.f100*k;t.c+=i.c100*k;return t;},{kcal:0,p:0,f:0,c:0}); }
+
+function addItem(mealId,name,grams,k,p,f,c){
+  const key=dk(selected);
+  const arr=S.entries[key]?S.entries[key].slice():[];
+  arr.push({id:Date.now()+""+Math.floor(Math.random()*1e4),mealId,name,grams,kcal100:k,p100:p,f100:f,c100:c});
+  S.entries[key]=arr; persist();
+}
+function updateGrams(id,g){ const key=dk(selected); S.entries[key]=S.entries[key].map(i=>i.id===id?{...i,grams:g}:i); persist(); }
+function removeItem(id){ const key=dk(selected); S.entries[key]=S.entries[key].filter(i=>i.id!==id); persist(); }
+
+// ───────────────── Главный экран
+function renderMain(){
+  const t=totals(selected);
+  const over=t.kcal>S.goal;
+  const pct=Math.min(1,t.kcal/S.goal);
+  const CIRC=2*Math.PI*84;
+  const mg={p:R(S.goal*0.041),f:R(S.goal*0.032),c:R(S.goal*0.114)};
+  const today=new Date();
+  const title=same(selected,today)?"Сегодня":selected.getDate()+" "+MONTHS[selected.getMonth()];
+
+  // неделя
+  const start=new Date(selected); start.setDate(start.getDate()-((start.getDay()+6)%7));
+  let week="";
+  for(let i=0;i<7;i++){
+    const d=new Date(start); d.setDate(start.getDate()+i);
+    const sel=same(d,selected), k=dayKcal(d);
+    week+=`<button class="wday${sel?" sel":""}" onclick="pickDay('${d.toISOString()}')">
+      <span class="wd">${WD[(d.getDay()+6)%7]}</span><span class="dn">${d.getDate()}</span>
+      <span class="dot" style="background:${k>0?"var(--accent)":"transparent"}"></span></button>`;
+  }
+
+  const macros=[["Белки",t.p,mg.p,"#4A7DBE"],["Жиры",t.f,mg.f,"#D9A441"],["Углеводы",t.c,mg.c,"#B06AC4"]]
+    .map(([l,v,m,col])=>`<div><div class="macro-row"><span class="lbl">${l}</span><span><b>${R(v)}</b><span class="of"> / ${m} г</span></span></div>
+      <div class="bar"><div style="width:${Math.min(100,v/m*100)}%;background:${col}"></div></div></div>`).join("");
+
+  const meals=MEALS.map(m=>{
+    const items=dayItems(selected).filter(i=>i.mealId===m.id);
+    const mk=items.reduce((s,i)=>s+i.kcal100*i.grams/100,0);
+    const rows=items.map(i=>`<button class="item" onclick="openEdit('${i.id}')">
+      <div><div class="item-name">${esc(i.name)}</div><div class="item-g">${i.grams} г</div></div>
+      <div class="item-k">${R(i.kcal100*i.grams/100)}</div></button>`).join("");
+    return `<div class="meal"><div class="meal-head"><div><span class="meal-title">${m.label}</span>${mk>0?`<span class="meal-kcal">${R(mk)} ккал</span>`:""}</div>
+      <button class="add-btn" onclick="openAdd('${m.id}')">+</button></div>
+      ${rows||'<div class="meal-empty">Пока пусто — нажмите «+», чтобы добавить</div>'}</div>`;
+  }).join("");
+
+  document.getElementById("app").innerHTML=`
+  <div class="header">
+    <button class="h-date" onclick="openCalendar()">
+      <div class="h-title">${title}</div>
+      <div class="h-sub">${MONTHS_NOM[selected.getMonth()]} ${selected.getFullYear()} · календарь ▾</div>
+    </button>
+    <div class="h-actions">
+      <button class="chip" onclick="openGoal()">цель ${S.goal}</button>
+      <button class="chip" onclick="openSettings()">⚙</button>
+    </div>
+  </div>
+  <div class="week">${week}</div>
+  <div class="summary">
+    <div class="ringwrap">
+      <svg width="190" height="190" viewBox="0 0 190 190">
+        <circle cx="95" cy="95" r="84" fill="none" stroke="var(--surface)" stroke-width="11"/>
+        <circle cx="95" cy="95" r="84" fill="none" stroke="${over?"var(--warn)":"var(--accent)"}" stroke-width="11"
+          stroke-linecap="round" stroke-dasharray="${CIRC}" stroke-dashoffset="${CIRC*(1-pct)}"
+          style="transition:stroke-dashoffset .6s ease"/>
+      </svg>
+      <div class="ring-center">
+        <div class="big-num">${R(t.kcal)}</div>
+        <div class="ring-sub">${over?"+"+R(t.kcal-S.goal)+" сверх цели":"осталось "+R(Math.max(0,S.goal-t.kcal))}</div>
+      </div>
+    </div>
+    <div class="macros">${macros}</div>
+  </div>
+  <div class="meals">${meals}
+    <div class="footnote">Данные хранятся на этом телефоне. AI-оценка калорий по фото — приблизительная.</div>
+  </div>`;
+}
+
+window.pickDay=iso=>{ selected=new Date(iso); renderMain(); };
+
+// ───────────────── Шторки
+function showSheet(html){ document.getElementById("sheet-root").innerHTML=
+  `<div class="overlay" onclick="if(event.target===this)closeSheet()"><div class="sheet"><div class="grab"></div><div class="sheet-body">${html}</div></div></div>`; }
+window.closeSheet=()=>{ document.getElementById("sheet-root").innerHTML=""; addCtx=null; editCtx=null; aiCtx=null; goalTmp=null; renderMain(); };
+
+// ── Добавление
+window.openAdd=mealId=>{ addCtx={mealId,tab:"search",query:"",picked:null}; aiCtx={status:"idle",items:[],error:null}; renderAdd(); };
+window.setTab=t=>{ addCtx.tab=t; renderAdd(); };
+window.setQuery=v=>{ addCtx.query=v; renderSearchList(); };
+window.pickFood=id=>{ const f=FOOD_DB.find(x=>x.id===id); addCtx.picked={food:f,grams:f.portion}; renderAdd(); };
+window.backToSearch=()=>{ addCtx.picked=null; renderAdd(); };
+window.bumpPicked=d=>{ addCtx.picked.grams=Math.max(5,addCtx.picked.grams+d); renderAdd(); };
+window.setPickedG=g=>{ addCtx.picked.grams=g; renderAdd(); };
+window.confirmPicked=()=>{ const p=addCtx.picked,f=p.food; addItem(addCtx.mealId,f.name,p.grams,f.kcal,f.p,f.f,f.c); closeSheet(); };
+
+function gramsPickerHTML(name,grams,portion,kcal100,opts){
+  const kcal=R(kcal100*grams/100);
+  const halves=[R(portion/2),portion,portion*2];
+  return `${opts.back?`<button class="back-link" onclick="${opts.back}">← назад к поиску</button>`:""}
+  <div style="font-size:17px;font-weight:600">${esc(name)}</div>
+  <div style="font-size:13px;color:var(--muted);margin:2px 0 18px">${R(kcal100)} ккал на 100 г</div>
+  <div class="grams-row">
+    <button class="stepper" onclick="${opts.bump}(-25)">−25</button>
+    <button class="stepper" onclick="${opts.bump}(-5)">−5</button>
+    <div style="min-width:110px;text-align:center"><div class="grams-num">${grams}</div><div class="grams-lbl">граммов</div></div>
+    <button class="stepper" onclick="${opts.bump}(5)">+5</button>
+    <button class="stepper" onclick="${opts.bump}(25)">+25</button>
+  </div>
+  <div class="portions">
+    ${halves.map((g,i)=>`<button class="portion${grams===g?" on":""}" onclick="${opts.setG}(${g})">${["½ порции","1 порция","2 порции"][i]}<br><span>${g} г</span></button>`).join("")}
+  </div>
+  <button class="primary" onclick="${opts.confirm}">${opts.confirmLabel||"Добавить"} · ${kcal} ккал</button>
+  ${opts.del?`<button class="danger" onclick="${opts.del}">Удалить запись</button>`:""}`;
+}
+
+function renderSearchList(){
+  const box=document.getElementById("searchList"); if(!box)return;
+  const q=addCtx.query.trim().toLowerCase();
+  const res=q?FOOD_DB.filter(f=>f.name.toLowerCase().includes(q)).slice(0,30):FOOD_DB.slice(0,12);
+  box.innerHTML=res.length?res.map(f=>`<button class="food-row" onclick="pickFood('${f.id}')">
+    <div><div class="food-name">${esc(f.name)}</div><div class="food-bju">Б ${f.p} · Ж ${f.f} · У ${f.c}</div></div>
+    <div class="food-k"><b>${f.kcal}</b> /100 г</div></button>`).join("")
+  :`<div class="empty-msg">Ничего не нашлось. Попробуйте сфотографировать — AI оценит сам.</div>`;
+}
+
+function renderAdd(){
+  const meal=MEALS.find(m=>m.id===addCtx.mealId);
+  let body="";
+  if(addCtx.tab==="search"){
+    if(addCtx.picked){
+      body=gramsPickerHTML(addCtx.picked.food.name,addCtx.picked.grams,addCtx.picked.food.portion,addCtx.picked.food.kcal,
+        {back:"backToSearch()",bump:"bumpPicked",setG:"setPickedG",confirm:"confirmPicked()"});
+    } else {
+      body=`<input class="search-input" placeholder="Гречка, борщ, сырники…" value="${esc(addCtx.query)}" oninput="setQuery(this.value)" autofocus>
+        <div id="searchList"></div>`;
+    }
+  } else {
+    body=renderPhotoBody();
+  }
+  showSheet(`<div class="sheet-title">Добавить в ${meal.label.toLowerCase()}</div>
+    <div class="tabs">
+      <button class="tab${addCtx.tab==="search"?" on":""}" onclick="setTab('search')">Поиск</button>
+      <button class="tab${addCtx.tab==="photo"?" on":""}" onclick="setTab('photo')">Фото · AI</button>
+    </div>${body}`);
+  if(addCtx.tab==="search"&&!addCtx.picked){ renderSearchList(); const inp=document.querySelector(".search-input"); if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);} }
+}
+
+// ── Фото / AI
+function renderPhotoBody(){
+  if(!S.apiKey){
+    return `<div style="text-align:center;padding:30px 10px">
+      <div class="photo-emoji">🔑</div>
+      <div class="photo-t">Нужен бесплатный AI-ключ</div>
+      <div class="photo-s" style="margin-bottom:18px">Один раз вставьте ключ Groq или Gemini в настройках — и фото-распознавание заработает</div>
+      <button class="primary dark" style="width:auto;padding:13px 28px" onclick="openSettings()">Открыть настройки</button></div>`;
+  }
+  if(aiCtx.status==="idle"){
+    return `<button class="photo-drop" onclick="document.getElementById('photoInput').click()">
+      <div class="photo-emoji">📷</div><div class="photo-t">Сфотографируйте еду</div>
+      <div class="photo-s">AI определит блюда, граммовку и калории</div></button>`;
+  }
+  if(aiCtx.status==="loading"){
+    return `<div style="text-align:center;padding:44px 20px">
+      <div style="font-size:30px;animation:pulse 1.2s infinite">🔎</div>
+      <div class="photo-t" style="margin-top:12px">Анализирую фото…</div>
+      <div class="photo-s">Обычно 5–10 секунд</div></div>`;
+  }
+  if(aiCtx.status==="error"){
+    return `<div class="err">${esc(aiCtx.error)}</div>
+      <button class="primary dark" onclick="resetAI()">Попробовать снова</button>`;
+  }
+  // done
+  const total=aiCtx.items.filter(i=>i.checked).reduce((s,i)=>s+i.kcal100*i.grams/100,0);
+  const any=aiCtx.items.some(i=>i.checked);
+  const rows=aiCtx.items.map((it,idx)=>`<div class="ai-item${it.checked?"":" off"}">
+    <div class="ai-head">
+      <button class="ai-check" onclick="toggleAI(${idx})"><span class="cb${it.checked?" on":""}">${it.checked?"✓":""}</span>
+        <span style="font-size:14.5px;font-weight:500">${esc(it.name)}</span></button>
+      <span style="font-size:14px;font-weight:600">${R(it.kcal100*it.grams/100)} ккал</span>
+    </div>
+    ${it.checked?`<div class="ai-grams">
+      <button class="stepper sm" onclick="bumpAI(${idx},-25)">−25</button>
+      <button class="stepper sm" onclick="bumpAI(${idx},-10)">−10</button>
+      <div class="g">${it.grams} г</div>
+      <button class="stepper sm" onclick="bumpAI(${idx},10)">+10</button>
+      <button class="stepper sm" onclick="bumpAI(${idx},25)">+25</button></div>`:""}
+  </div>`).join("");
+  return `<div style="font-size:13px;color:var(--muted);margin-bottom:10px">Распознано — проверьте и поправьте граммовку:</div>
+    ${rows}
+    <button class="primary dark" style="margin-top:8px" ${any?"":"disabled"} onclick="confirmAI()">Добавить · ${R(total)} ккал</button>
+    <button class="ghost" onclick="resetAI()">Сфотографировать заново</button>`;
+}
+window.resetAI=()=>{ aiCtx={status:"idle",items:[],error:null}; renderAdd(); };
+window.toggleAI=i=>{ aiCtx.items[i].checked=!aiCtx.items[i].checked; renderAdd(); };
+window.bumpAI=(i,d)=>{ aiCtx.items[i].grams=Math.max(5,aiCtx.items[i].grams+d); renderAdd(); };
+window.confirmAI=()=>{ aiCtx.items.filter(i=>i.checked).forEach(i=>addItem(addCtx.mealId,i.name,i.grams,i.kcal100,i.p100,i.f100,i.c100)); closeSheet(); };
+
+document.getElementById("photoInput").addEventListener("change",e=>{
+  const f=e.target.files&&e.target.files[0]; e.target.value="";
+  if(f&&addCtx) analyzePhoto(f);
+});
+
+function compressImage(file){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    img.onload=()=>{
+      const max=1024; let w=img.width,h=img.height;
+      if(Math.max(w,h)>max){ const k=max/Math.max(w,h); w=Math.round(w*k); h=Math.round(h*k); }
+      const cv=document.createElement("canvas"); cv.width=w; cv.height=h;
+      cv.getContext("2d").drawImage(img,0,0,w,h);
+      const dataUrl=cv.toDataURL("image/jpeg",0.8);
+      res({dataUrl,base64:dataUrl.split(",")[1]});
+    };
+    img.onerror=()=>rej(new Error("bad image"));
+    img.src=URL.createObjectURL(file);
+  });
+}
+
+const AI_PROMPT=`Определи еду на фото и оцени её пищевую ценность. Ответь ТОЛЬКО валидным JSON без markdown и пояснений, в формате:
+{"items":[{"name":"название блюда по-русски","grams":число_граммов_на_фото,"kcal100":ккал_на_100г,"p100":белки_на_100г,"f100":жиры_на_100г,"c100":углеводы_на_100г}]}
+Если еды на фото нет, верни {"items":[]}. Оценивай реалистично, граммовку — по видимому размеру порции.`;
+
+async function analyzePhoto(file){
+  aiCtx={status:"loading",items:[],error:null}; renderAdd();
+  try{
+    const {dataUrl,base64}=await compressImage(file);
+    let text="";
+    if(S.provider==="groq"){
+      const r=await fetch("https://api.groq.com/openai/v1/chat/completions",{
+        method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":"Bearer "+S.apiKey},
+        body:JSON.stringify({
+          model:"meta-llama/llama-4-scout-17b-16e-instruct",
+          max_tokens:1000,
+          messages:[{role:"user",content:[
+            {type:"text",text:AI_PROMPT},
+            {type:"image_url",image_url:{url:dataUrl}}]}],
+        }),
+      });
+      if(r.status===401) throw new Error("Неверный API-ключ. Проверьте его в настройках.");
+      if(r.status===429) throw new Error("Лимит запросов исчерпан, подождите минуту.");
+      const data=await r.json();
+      if(data.error) throw new Error("Groq: "+(data.error.message||"ошибка"));
+      text=data.choices[0].message.content;
+    } else {
+      const r=await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key="+encodeURIComponent(S.apiKey),{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({contents:[{parts:[
+          {text:AI_PROMPT},
+          {inline_data:{mime_type:"image/jpeg",data:base64}}]}]}),
+      });
+      if(r.status===400||r.status===403) throw new Error("Неверный API-ключ. Проверьте его в настройках.");
+      if(r.status===429) throw new Error("Лимит запросов исчерпан, подождите минуту.");
+      const data=await r.json();
+      if(data.error) throw new Error("Gemini: "+(data.error.message||"ошибка"));
+      text=data.candidates[0].content.parts.map(p=>p.text||"").join("\n");
+    }
+    const clean=text.replace(/```json|```/g,"").trim();
+    const m=clean.match(/\{[\s\S]*\}/);
+    const parsed=JSON.parse(m?m[0]:clean);
+    if(!parsed.items||!parsed.items.length){
+      aiCtx={status:"error",items:[],error:"Не удалось распознать еду на фото. Попробуйте другой ракурс."};
+    } else {
+      aiCtx={status:"done",error:null,items:parsed.items.map((it,i)=>({
+        id:"ai"+i,name:String(it.name||"Блюдо"),grams:Math.max(5,R(+it.grams||100)),
+        kcal100:+it.kcal100||0,p100:+it.p100||0,f100:+it.f100||0,c100:+it.c100||0,checked:true}))};
+    }
+  }catch(e){
+    aiCtx={status:"error",items:[],error:e.message&&e.message.length<120?e.message:"Ошибка анализа. Проверьте интернет и ключ в настройках."};
+  }
+  if(addCtx) renderAdd();
+}
+
+// ── Редактирование записи
+window.openEdit=id=>{
+  const it=dayItems(selected).find(x=>x.id===id); if(!it)return;
+  editCtx={item:{...it}};
+  renderEdit();
+};
+function renderEdit(){
+  const it=editCtx.item;
+  showSheet(gramsPickerHTML(it.name,it.grams,it.grams<=10?10:it.grams, it.kcal100,
+    {bump:"bumpEdit",setG:"setEditG",confirm:"confirmEdit()",del:"deleteEdit()",confirmLabel:"Сохранить"}));
+}
+window.bumpEdit=d=>{ editCtx.item.grams=Math.max(5,editCtx.item.grams+d); renderEdit(); };
+window.setEditG=g=>{ editCtx.item.grams=g; renderEdit(); };
+window.confirmEdit=()=>{ updateGrams(editCtx.item.id,editCtx.item.grams); closeSheet(); };
+window.deleteEdit=()=>{ removeItem(editCtx.item.id); closeSheet(); };
+
+// ── Календарь
+window.openCalendar=()=>{ calView=new Date(selected.getFullYear(),selected.getMonth(),1); renderCalendar(); };
+window.calShift=d=>{ calView=new Date(calView.getFullYear(),calView.getMonth()+d,1); renderCalendar(); };
+window.calPick=iso=>{ selected=new Date(iso); closeSheet(); };
+function renderCalendar(){
+  const today=new Date();
+  const startPad=(new Date(calView.getFullYear(),calView.getMonth(),1).getDay()+6)%7;
+  const daysIn=new Date(calView.getFullYear(),calView.getMonth()+1,0).getDate();
+  let cells="";
+  for(let i=0;i<startPad;i++) cells+="<div></div>";
+  for(let n=1;n<=daysIn;n++){
+    const d=new Date(calView.getFullYear(),calView.getMonth(),n);
+    const k=dayKcal(d), ratio=k/S.goal;
+    const cls="cal-day"+(same(d,selected)?" sel":"")+(same(d,today)?" today":"");
+    cells+=`<button class="${cls}" onclick="calPick('${d.toISOString()}')">
+      <span class="n">${n}</span>
+      <span class="d" style="background:${k===0?"transparent":ratio>1.1?"var(--warn)":"var(--accent)"}"></span></button>`;
+  }
+  showSheet(`<div class="cal-nav">
+      <button class="cal-arrow" onclick="calShift(-1)">‹</button>
+      <div class="cal-month">${MONTHS_NOM[calView.getMonth()]} ${calView.getFullYear()}</div>
+      <button class="cal-arrow" onclick="calShift(1)">›</button></div>
+    <div class="cal-grid" style="margin-bottom:6px">${WD.map(w=>`<div class="cal-wd">${w}</div>`).join("")}</div>
+    <div class="cal-grid">${cells}</div>
+    <div class="legend"><span><i style="background:var(--accent)"></i>в норме</span><span><i style="background:var(--warn)"></i>перебор</span></div>`);
+}
+
+// ── Цель
+window.openGoal=()=>{ goalTmp=S.goal; renderGoal(); };
+window.bumpGoal=d=>{ goalTmp=Math.max(800,goalTmp+d); renderGoal(); };
+window.setGoalV=g=>{ goalTmp=g; renderGoal(); };
+window.saveGoal=()=>{ S.goal=goalTmp; persist(); closeSheet(); };
+function renderGoal(){
+  showSheet(`<div class="sheet-title" style="margin-bottom:4px">Дневная цель</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:18px">Нормы белков, жиров и углеводов пересчитаются автоматически</div>
+    <div class="goal-row">
+      <button class="stepper" onclick="bumpGoal(-50)">−50</button>
+      <div class="goal-num">${goalTmp}</div>
+      <button class="stepper" onclick="bumpGoal(50)">+50</button></div>
+    <div class="goal-presets">${[1600,1800,2000,2200,2500].map(g=>`<button class="${goalTmp===g?"on":""}" onclick="setGoalV(${g})">${g}</button>`).join("")}</div>
+    <button class="primary dark" onclick="saveGoal()">Готово</button>`);
+}
+
+// ── Настройки AI
+window.openSettings=()=>renderSettings();
+window.setProvider=p=>{ S.provider=p; persist(); renderSettings(); };
+window.saveSettings=()=>{ S.apiKey=document.getElementById("keyInput").value.trim(); persist(); closeSheet(); };
+function renderSettings(){
+  const groq=S.provider==="groq";
+  showSheet(`<div class="sheet-title" style="margin-bottom:4px">AI для фото</div>
+    <div style="font-size:13px;color:var(--muted)">Бесплатный ключ нужен один раз — он сохранится на этом телефоне</div>
+    <div class="set-label">Сервис</div>
+    <div class="provider-row">
+      <button class="provider-btn${groq?" on":""}" onclick="setProvider('groq')">Groq</button>
+      <button class="provider-btn${!groq?" on":""}" onclick="setProvider('gemini')">Google Gemini</button>
+    </div>
+    <div class="set-label">API-ключ</div>
+    <input id="keyInput" class="set-input" placeholder="${groq?"gsk_…":"AIza…"}" value="${esc(S.apiKey)}" autocomplete="off">
+    <div class="set-note">${groq
+      ?"Получить бесплатно: <b>console.groq.com</b> → API Keys → Create API Key. Лимитов хватает на десятки фото в день."
+      :"Получить бесплатно: <b>aistudio.google.com</b> → Get API key. Бесплатного лимита хватает с запасом."}</div>
+    <button class="primary dark" style="margin-top:20px" onclick="saveSettings()">Сохранить</button>`);
+}
+
+// ── Service worker
+if("serviceWorker" in navigator){ window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{})); }
+
+renderMain();
+</script>
+</body>
+</html>
