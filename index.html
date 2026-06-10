@@ -19,6 +19,7 @@
     --ink: #16191C;
     --muted: #8A9199;
     --surface: #F5F6F4;
+    --nav-h: 64px;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; }
   html, body { height: 100%; }
@@ -29,135 +30,205 @@
     padding-top: env(safe-area-inset-top);
     overscroll-behavior-y: none;
   }
-  button { cursor: pointer; font-family: inherit; border: none; background: none; color: inherit; }
-  input { font-family: inherit; outline: none; border: none; }
+  button { cursor: pointer; font-family: inherit; border: none; background: none; color: inherit; padding: 0; }
+  button:active { opacity: .75; }
+  input { font-family: inherit; outline: none; border: none; font-size: 16px; }
   ::-webkit-scrollbar { display: none; }
+  #app { padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 12px); animation: fadein .2s; }
+  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
 
-  .header { padding: 20px 20px 8px; display: flex; align-items: center; justify-content: space-between; }
-  .h-date { text-align: left; padding: 0; }
-  .h-title { font-size: 22px; font-weight: 600; letter-spacing: -0.3px; }
-  .h-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
-  .h-actions { display: flex; gap: 8px; }
-  .chip { background: var(--surface); border-radius: 14px; padding: 8px 14px; font-size: 13px; font-weight: 500; }
+  /* ── шапка ── */
+  .header { padding: 18px 16px 6px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .h-date { text-align: left; min-width: 0; }
+  .h-title { font-size: 21px; font-weight: 600; letter-spacing: -0.3px; }
+  .h-sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .h-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .chip { background: var(--surface); border-radius: 14px; padding: 9px 13px; font-size: 13px; font-weight: 500; transition: background .15s; }
 
-  .week { display: flex; gap: 6px; padding: 12px 16px 4px; }
-  .wday { flex: 1; border-radius: 16px; padding: 10px 0 8px; display: flex; flex-direction: column; align-items: center; gap: 3px; transition: background .15s; }
+  /* ── лента недели ── */
+  .week { display: flex; gap: 4px; padding: 10px 12px 2px; }
+  .wday { flex: 1; min-width: 0; border-radius: 14px; padding: 9px 0 7px; display: flex; flex-direction: column; align-items: center; gap: 3px; transition: background .2s, color .2s; }
   .wday.sel { background: var(--ink); color: #fff; }
-  .wday .wd { font-size: 11px; color: var(--muted); }
+  .wday .wd { font-size: 10.5px; color: var(--muted); }
   .wday.sel .wd { color: rgba(255,255,255,.6); }
-  .wday .dn { font-size: 16px; font-weight: 600; }
+  .wday .dn { font-size: 15px; font-weight: 600; }
   .wday .dot { width: 5px; height: 5px; border-radius: 5px; }
 
-  .summary { display: flex; align-items: center; gap: 20px; padding: 16px 24px 8px; }
-  .ringwrap { position: relative; width: 190px; height: 190px; flex-shrink: 0; }
-  .ringwrap svg { transform: rotate(-90deg); }
-  .ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-  .big-num { font-family: 'Unbounded', sans-serif; font-size: 34px; font-weight: 600; letter-spacing: -1px; line-height: 1; }
-  .ring-sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
-  .macros { flex: 1; display: flex; flex-direction: column; gap: 14px; }
-  .macro-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
-  .macro-row .lbl { color: var(--muted); }
+  /* ── сводка: кольцо + БЖУ ── */
+  .summary { display: flex; align-items: center; gap: 14px; padding: 14px 18px 6px; }
+  .ringwrap { position: relative; width: 158px; height: 158px; flex-shrink: 0; }
+  .ringwrap svg { width: 100%; height: 100%; transform: rotate(-90deg); display: block; }
+  .ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 16px; text-align: center; }
+  .big-num { font-family: 'Unbounded', sans-serif; font-size: 29px; font-weight: 600; letter-spacing: -1px; line-height: 1; }
+  .ring-sub { font-size: 11px; color: var(--muted); margin-top: 5px; }
+  .macros { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .macro-row { display: flex; justify-content: space-between; gap: 6px; font-size: 12px; margin-bottom: 5px; }
+  .macro-row .lbl { color: var(--muted); white-space: nowrap; }
   .macro-row b { font-weight: 600; }
   .macro-row .of { color: var(--muted); font-weight: 400; }
-  .bar { height: 5px; background: var(--surface); border-radius: 5px; }
-  .bar > div { height: 5px; border-radius: 5px; transition: width .5s; }
+  .bar { height: 5px; background: var(--surface); border-radius: 5px; overflow: hidden; }
+  .bar > div { height: 5px; border-radius: 5px; transition: width .5s ease; }
+  @media (max-width: 374px) {
+    .ringwrap { width: 138px; height: 138px; }
+    .big-num { font-size: 25px; }
+    .summary { gap: 10px; padding: 12px 14px 4px; }
+  }
 
-  .meals { padding: 12px 16px 40px; }
-  .meal { background: var(--surface); border-radius: 22px; padding: 16px 16px 12px; margin-bottom: 12px; }
-  .meal-head { display: flex; align-items: center; justify-content: space-between; }
+  /* ── приёмы пищи ── */
+  .meals { padding: 10px 12px 8px; }
+  .meal { background: var(--surface); border-radius: 20px; padding: 14px 14px 11px; margin-bottom: 10px; }
+  .meal-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .meal-title { font-size: 16px; font-weight: 600; }
-  .meal-kcal { font-size: 13px; color: var(--muted); margin-left: 8px; }
-  .add-btn { width: 30px; height: 30px; border-radius: 10px; background: var(--ink); color: #fff; font-size: 18px; line-height: 28px; }
-  .item { display: flex; justify-content: space-between; align-items: center; width: 100%; background: #fff; border-radius: 14px; padding: 11px 14px; margin-top: 6px; text-align: left; }
-  .item-name { font-size: 14px; font-weight: 500; }
+  .meal-kcal { font-size: 13px; color: var(--muted); margin-left: 7px; }
+  .add-btn { width: 32px; height: 32px; border-radius: 11px; background: var(--ink); color: #fff; font-size: 19px; line-height: 30px; flex-shrink: 0; text-align: center; }
+  .item { display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; background: #fff; border-radius: 13px; padding: 11px 13px; margin-top: 6px; text-align: left; }
+  .item-info { min-width: 0; }
+  .item-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .item-g { font-size: 12px; color: var(--muted); margin-top: 1px; }
-  .item-k { font-size: 14px; font-weight: 600; }
+  .item-k { font-size: 14px; font-weight: 600; flex-shrink: 0; }
   .meal-empty { font-size: 12.5px; color: var(--muted); margin-top: 8px; }
-  .footnote { text-align: center; font-size: 11.5px; color: #B6BCC2; padding: 8px 24px 24px; }
+  .footnote { text-align: center; font-size: 11px; color: #B6BCC2; padding: 4px 24px 8px; }
 
+  /* ── нижняя навигация ── */
+  .nav { position: fixed; bottom: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto;
+    background: rgba(255,255,255,.92); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    border-top: 1px solid #EDEFF1; display: flex; z-index: 40;
+    padding-bottom: env(safe-area-inset-bottom); height: calc(var(--nav-h) + env(safe-area-inset-bottom)); }
+  .nav button { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    font-size: 11px; font-weight: 500; color: var(--muted); transition: color .15s; }
+  .nav button.on { color: var(--ink); }
+  .nav svg { width: 23px; height: 23px; }
+
+  /* ── вкладка календаря ── */
+  .cal-page { padding: 6px 14px 10px; }
+  .cal-nav { display: flex; align-items: center; justify-content: space-between; margin: 8px 0 14px; }
+  .cal-arrow { background: var(--surface); border-radius: 12px; width: 40px; height: 40px; font-size: 17px; }
+  .cal-month { font-size: 17px; font-weight: 600; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
+  .cal-wd { text-align: center; font-size: 11px; color: var(--muted); padding: 4px 0; }
+  .cal-day { border-radius: 13px; background: var(--surface); min-height: 52px; padding: 7px 0 6px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; transition: transform .1s; }
+  .cal-day:active { transform: scale(.94); opacity: 1; }
+  .cal-day.today { box-shadow: inset 0 0 0 1.5px var(--ink); }
+  .cal-day.future { opacity: .45; }
+  .cal-day .n { font-size: 13.5px; font-weight: 600; }
+  .cal-day .k { font-size: 9.5px; font-weight: 600; line-height: 1; }
+  .cal-day .k.ok { color: var(--accent); }
+  .cal-day .k.over { color: var(--warn); }
+  .cal-day .k.none { color: transparent; }
+  .legend { display: flex; gap: 16px; justify-content: center; margin-top: 14px; font-size: 12px; color: var(--muted); }
+  .legend i { display: inline-block; width: 7px; height: 7px; border-radius: 7px; margin-right: 5px; }
+  .month-stats { display: flex; gap: 8px; margin-top: 16px; }
+  .ms-card { flex: 1; background: var(--surface); border-radius: 16px; padding: 12px 8px; text-align: center; }
+  .ms-num { font-family: 'Unbounded', sans-serif; font-size: 17px; font-weight: 600; }
+  .ms-lbl { font-size: 10.5px; color: var(--muted); margin-top: 4px; }
+
+  /* ── детали дня ── */
+  .dd-total { display: flex; align-items: baseline; gap: 8px; margin: 2px 0 4px; }
+  .dd-big { font-family: 'Unbounded', sans-serif; font-size: 32px; font-weight: 600; }
+  .dd-of { font-size: 13.5px; color: var(--muted); }
+  .dd-macros { display: flex; gap: 8px; margin: 12px 0 16px; }
+  .dd-m { flex: 1; background: var(--surface); border-radius: 14px; padding: 10px 6px; text-align: center; }
+  .dd-m b { font-size: 15px; }
+  .dd-m span { display: block; font-size: 10.5px; color: var(--muted); margin-top: 3px; }
+  .dd-meal { margin-bottom: 14px; }
+  .dd-meal-t { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+  .dd-row { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; padding: 7px 0; border-bottom: 1px solid var(--surface); }
+  .dd-row .nm { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dd-row .gr { color: var(--muted); font-size: 12.5px; flex-shrink: 0; }
+  .dd-row .kc { font-weight: 600; flex-shrink: 0; }
+
+  /* ── шторки ── */
   .overlay { position: fixed; inset: 0; background: rgba(20,24,28,.45); z-index: 50; animation: fade .2s; display: flex; align-items: flex-end; }
-  .sheet { background: #fff; border-radius: 26px 26px 0 0; animation: rise .25s ease; max-height: 88vh; width: 100%; max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; overflow: hidden; padding-bottom: env(safe-area-inset-bottom); }
+  .sheet { background: #fff; border-radius: 24px 24px 0 0; animation: rise .28s cubic-bezier(.32,.72,.35,1);
+    max-height: 90dvh; width: 100%; max-width: 480px; margin: 0 auto; display: flex; flex-direction: column;
+    overflow: hidden; padding-bottom: env(safe-area-inset-bottom); }
   .grab { width: 38px; height: 4px; background: #E3E6E9; border-radius: 4px; margin: 10px auto 0; flex-shrink: 0; }
-  .sheet-body { padding: 14px 20px 24px; overflow-y: auto; }
+  .sheet-body { padding: 14px 18px 22px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
   .sheet-title { font-size: 18px; font-weight: 600; margin-bottom: 14px; }
   @keyframes rise { from { transform: translateY(100%); } to { transform: translateY(0); } }
   @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
 
   .tabs { display: flex; background: var(--surface); border-radius: 14px; padding: 4px; margin-bottom: 16px; }
-  .tab { flex: 1; border-radius: 11px; padding: 9px 0; font-size: 14px; font-weight: 500; color: var(--muted); transition: all .15s; }
+  .tab { flex: 1; border-radius: 11px; padding: 9px 2px; font-size: 13.5px; font-weight: 500; color: var(--muted); transition: all .15s; white-space: nowrap; }
   .tab.on { background: #fff; color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,.08); }
 
-  .search-input { width: 100%; background: var(--surface); border-radius: 14px; padding: 13px 16px; font-size: 15px; margin-bottom: 12px; }
-  .food-row { display: flex; justify-content: space-between; align-items: center; width: 100%; border-bottom: 1px solid var(--surface); padding: 12px 4px; text-align: left; }
-  .food-name { font-size: 14.5px; font-weight: 500; }
+  .search-input { width: 100%; background: var(--surface); border-radius: 14px; padding: 13px 16px; margin-bottom: 10px; }
+  .food-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%;
+    border-bottom: 1px solid var(--surface); padding: 12px 4px; text-align: left; }
+  .food-info { min-width: 0; }
+  .food-name { font-size: 14.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .food-bju { font-size: 12px; color: var(--muted); margin-top: 1px; }
-  .food-k { font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .food-k { font-size: 12.5px; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
   .food-k b { color: var(--ink); font-size: 14px; }
-  .empty-msg { text-align: center; color: var(--muted); font-size: 14px; padding: 30px; }
+  .empty-msg { text-align: center; color: var(--muted); font-size: 14px; padding: 30px 10px; line-height: 1.5; }
 
-  .stepper { padding: 12px 18px; border-radius: 14px; font-size: 15px; font-weight: 600; background: var(--surface); }
-  .stepper.sm { padding: 7px 11px; border-radius: 10px; font-size: 12.5px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
-  .grams-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 16px; }
-  .grams-num { font-family: 'Unbounded', sans-serif; font-size: 30px; font-weight: 600; }
-  .grams-lbl { font-size: 12px; color: var(--muted); }
-  .portions { display: flex; gap: 8px; margin-bottom: 20px; }
-  .portion { flex: 1; border-radius: 12px; padding: 10px 0; font-size: 13px; font-weight: 500; background: var(--surface); }
+  /* ── граммовка ── */
+  .stepper { padding: 12px 0; width: 56px; text-align: center; border-radius: 14px; font-size: 14px; font-weight: 600; background: var(--surface); flex-shrink: 0; }
+  .stepper.sm { padding: 8px 0; width: 46px; border-radius: 10px; font-size: 12.5px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+  .grams-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 14px; }
+  .grams-mid { flex: 1; max-width: 110px; text-align: center; }
+  .grams-num { font-family: 'Unbounded', sans-serif; font-size: 28px; font-weight: 600; }
+  .grams-lbl { font-size: 11.5px; color: var(--muted); }
+  .portions { display: flex; gap: 8px; margin-bottom: 18px; }
+  .portion { flex: 1; min-width: 0; border-radius: 12px; padding: 10px 2px; font-size: 12.5px; font-weight: 500; background: var(--surface); transition: background .15s, color .15s; }
   .portion.on { background: var(--ink); color: #fff; }
-  .portion span { font-size: 11px; opacity: .6; }
+  .portion span { font-size: 10.5px; opacity: .6; }
+  @media (max-width: 374px) { .stepper { width: 50px; } }
 
-  .primary { width: 100%; background: var(--accent); color: #fff; border-radius: 16px; padding: 15px 0; font-size: 15px; font-weight: 600; }
+  .primary { width: 100%; background: var(--accent); color: #fff; border-radius: 16px; padding: 15px 0; font-size: 15px; font-weight: 600; text-align: center; }
   .primary.dark { background: var(--ink); }
   .primary:disabled { opacity: .4; }
-  .ghost { width: 100%; color: var(--muted); padding: 12px 0; font-size: 13.5px; }
-  .danger { width: 100%; color: var(--warn); padding: 13px 0; font-size: 14px; font-weight: 500; }
-  .back-link { color: var(--muted); font-size: 13.5px; padding: 0 0 10px; display: block; }
+  .ghost { width: 100%; color: var(--muted); padding: 12px 0; font-size: 13.5px; text-align: center; }
+  .danger { width: 100%; color: var(--warn); padding: 13px 0; font-size: 14px; font-weight: 500; text-align: center; }
+  .back-link { color: var(--muted); font-size: 13.5px; padding: 0 0 10px; display: block; text-align: left; }
 
-  .photo-drop { width: 100%; border: 2px dashed #D7DBDF; border-radius: 20px; padding: 44px 20px; text-align: center; }
-  .photo-emoji { font-size: 34px; margin-bottom: 10px; }
+  /* ── фото и скан ── */
+  .photo-drop { width: 100%; border: 2px dashed #D7DBDF; border-radius: 20px; padding: 38px 16px; text-align: center; }
+  .photo-emoji { font-size: 32px; margin-bottom: 10px; }
   .photo-t { font-size: 15px; font-weight: 600; }
-  .photo-s { font-size: 13px; color: var(--muted); margin-top: 6px; }
-  .ai-item { background: var(--surface); border-radius: 16px; padding: 12px 14px; margin-bottom: 8px; }
+  .photo-s { font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.45; }
+  .ai-item { background: var(--surface); border-radius: 16px; padding: 12px 13px; margin-bottom: 8px; transition: opacity .2s; }
   .ai-item.off { opacity: .45; }
-  .ai-head { display: flex; justify-content: space-between; align-items: center; }
-  .ai-check { display: flex; align-items: center; gap: 10px; text-align: left; padding: 0; }
-  .cb { width: 22px; height: 22px; border-radius: 8px; flex-shrink: 0; background: #fff; border: 1.5px solid #D7DBDF; color: #fff; font-size: 14px; line-height: 22px; text-align: center; }
-  .cb.on { background: var(--accent); border: none; }
-  .ai-grams { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+  .ai-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .ai-check { display: flex; align-items: center; gap: 10px; text-align: left; min-width: 0; }
+  .ai-check .nm { font-size: 14.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cb { width: 22px; height: 22px; border-radius: 8px; flex-shrink: 0; background: #fff; border: 1.5px solid #D7DBDF; color: #fff; font-size: 14px; line-height: 20px; text-align: center; transition: background .15s; }
+  .cb.on { background: var(--accent); border-color: var(--accent); }
+  .ai-grams { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
   .ai-grams .g { flex: 1; text-align: center; font-size: 14px; font-weight: 600; }
-  .err { text-align: center; font-size: 14.5px; color: #C25036; margin: 20px 0 14px; }
+  .err { text-align: center; font-size: 14px; color: #C25036; margin: 18px 0 14px; line-height: 1.5; }
 
-  .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-  .cal-arrow { background: var(--surface); border-radius: 12px; width: 38px; height: 38px; font-size: 16px; }
-  .cal-month { font-size: 17px; font-weight: 600; }
-  .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
-  .cal-wd { text-align: center; font-size: 11.5px; color: var(--muted); padding: 4px 0; }
-  .cal-day { border-radius: 13px; background: var(--surface); padding: 9px 0 7px; display: flex; flex-direction: column; align-items: center; gap: 3px; }
-  .cal-day.sel { background: var(--ink); color: #fff; }
-  .cal-day.today { box-shadow: inset 0 0 0 1.5px var(--ink); }
-  .cal-day.sel.today { box-shadow: none; }
-  .cal-day .n { font-size: 14px; font-weight: 600; }
-  .cal-day .d { width: 6px; height: 6px; border-radius: 6px; }
-  .legend { display: flex; gap: 16px; justify-content: center; margin-top: 16px; font-size: 12px; color: var(--muted); }
-  .legend i { display: inline-block; width: 7px; height: 7px; border-radius: 7px; margin-right: 5px; }
+  .scan-frame { position: relative; width: 100%; border-radius: 18px; overflow: hidden; background: #0E1113; aspect-ratio: 4/3; margin-bottom: 12px; }
+  .scan-frame video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .scan-line { position: absolute; left: 12%; right: 12%; top: 50%; height: 2px; background: var(--accent); border-radius: 2px; box-shadow: 0 0 12px rgba(30,158,90,.9); animation: scanmove 1.6s ease-in-out infinite; }
+  @keyframes scanmove { 0%,100% { transform: translateY(-34px); } 50% { transform: translateY(34px); } }
+  .scan-hint { text-align: center; font-size: 12.5px; color: var(--muted); margin-bottom: 12px; }
+  .manual-row { display: flex; gap: 8px; margin-top: 6px; }
+  .manual-row input { flex: 1; min-width: 0; background: var(--surface); border-radius: 14px; padding: 12px 14px; }
+  .manual-row button { background: var(--ink); color: #fff; border-radius: 14px; padding: 0 18px; font-size: 14px; font-weight: 600; flex-shrink: 0; }
+  .divider { display: flex; align-items: center; gap: 10px; color: #B6BCC2; font-size: 12px; margin: 14px 0 4px; }
+  .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--surface); }
 
+  /* ── настройки / цель ── */
   .set-label { font-size: 13px; font-weight: 600; margin: 16px 0 8px; }
-  .set-input { width: 100%; background: var(--surface); border-radius: 14px; padding: 13px 16px; font-size: 14px; }
+  .set-input { width: 100%; background: var(--surface); border-radius: 14px; padding: 13px 16px; }
   .set-note { font-size: 12.5px; color: var(--muted); line-height: 1.5; margin-top: 8px; }
-  .set-note a { color: var(--accent); }
   .provider-row { display: flex; gap: 8px; }
-  .provider-btn { flex: 1; border-radius: 12px; padding: 11px 0; font-size: 14px; font-weight: 500; background: var(--surface); }
+  .provider-btn { flex: 1; border-radius: 12px; padding: 11px 0; font-size: 14px; font-weight: 500; background: var(--surface); transition: background .15s, color .15s; text-align: center; }
   .provider-btn.on { background: var(--ink); color: #fff; }
-  .goal-row { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 20px; }
-  .goal-num { font-family: 'Unbounded', sans-serif; font-size: 32px; font-weight: 600; min-width: 120px; text-align: center; }
-  .goal-presets { display: flex; gap: 8px; margin-bottom: 18px; }
-  .goal-presets button { flex: 1; border-radius: 12px; padding: 9px 0; font-size: 13px; font-weight: 500; background: var(--surface); }
+  .goal-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 20px; }
+  .goal-num { font-family: 'Unbounded', sans-serif; font-size: 30px; font-weight: 600; min-width: 110px; text-align: center; }
+  .goal-presets { display: flex; gap: 6px; margin-bottom: 18px; }
+  .goal-presets button { flex: 1; min-width: 0; border-radius: 12px; padding: 9px 0; font-size: 12.5px; font-weight: 500; background: var(--surface); text-align: center; }
   .goal-presets button.on { background: var(--ink); color: #fff; }
 </style>
 </head>
 <body>
 <div id="app"></div>
 <div id="sheet-root"></div>
+<nav class="nav" id="nav"></nav>
 <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none">
 
 <script>
@@ -231,18 +302,18 @@ function load(){ try{ return JSON.parse(localStorage.getItem(LS_KEY))||{} }catch
 let saved=load();
 let S={
   goal: saved.goal||2200,
-  entries: saved.entries||{},          // {dateKey:[{id,mealId,name,grams,kcal100,p100,f100,c100}]}
-  provider: saved.provider||"groq",    // groq | gemini
+  entries: saved.entries||{},
+  provider: saved.provider||"groq",
   apiKey: saved.apiKey||"",
 };
 function persist(){ localStorage.setItem(LS_KEY, JSON.stringify(S)); }
 
+let page="diary";            // diary | calendar
 let selected=new Date();
-let calView=null;
-let addCtx=null;   // {mealId, tab, query, picked:{food,grams}}
-let editCtx=null;  // {item}
-let aiCtx=null;    // {status, items, error}
-let goalTmp=null;
+let calView=new Date(selected.getFullYear(),selected.getMonth(),1);
+let addCtx=null, editCtx=null, aiCtx=null, goalTmp=null;
+let scanCtx=null;            // {status, product, grams, error}
+let scanStream=null, scanTimer=null, zxingReader=null;
 
 // ───────────────── Утилиты
 const dk=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
@@ -252,7 +323,6 @@ const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"
 function dayItems(d){ return S.entries[dk(d)]||[]; }
 function dayKcal(d){ return dayItems(d).reduce((s,i)=>s+i.kcal100*i.grams/100,0); }
 function totals(d){ return dayItems(d).reduce((t,i)=>{const k=i.grams/100;t.kcal+=i.kcal100*k;t.p+=i.p100*k;t.f+=i.f100*k;t.c+=i.c100*k;return t;},{kcal:0,p:0,f:0,c:0}); }
-
 function addItem(mealId,name,grams,k,p,f,c){
   const key=dk(selected);
   const arr=S.entries[key]?S.entries[key].slice():[];
@@ -262,8 +332,21 @@ function addItem(mealId,name,grams,k,p,f,c){
 function updateGrams(id,g){ const key=dk(selected); S.entries[key]=S.entries[key].map(i=>i.id===id?{...i,grams:g}:i); persist(); }
 function removeItem(id){ const key=dk(selected); S.entries[key]=S.entries[key].filter(i=>i.id!==id); persist(); }
 
-// ───────────────── Главный экран
-function renderMain(){
+// ───────────────── Навигация
+const ICONS={
+  diary:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="8.4"/><path d="M12 7.6v4.4l3 1.8"/></svg>',
+  calendar:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 9.5h17M8 3.5v3M16 3.5v3"/></svg>'
+};
+function renderNav(){
+  document.getElementById("nav").innerHTML=`
+    <button class="${page==="diary"?"on":""}" onclick="goPage('diary')">${ICONS.diary}Дневник</button>
+    <button class="${page==="calendar"?"on":""}" onclick="goPage('calendar')">${ICONS.calendar}Календарь</button>`;
+}
+window.goPage=p=>{ page=p; if(p==="calendar") calView=new Date(selected.getFullYear(),selected.getMonth(),1); render(); };
+function render(){ renderNav(); page==="diary"?renderDiary():renderCalendarPage(); window.scrollTo(0,0); }
+
+// ───────────────── Дневник
+function renderDiary(){
   const t=totals(selected);
   const over=t.kcal>S.goal;
   const pct=Math.min(1,t.kcal/S.goal);
@@ -272,7 +355,6 @@ function renderMain(){
   const today=new Date();
   const title=same(selected,today)?"Сегодня":selected.getDate()+" "+MONTHS[selected.getMonth()];
 
-  // неделя
   const start=new Date(selected); start.setDate(start.getDate()-((start.getDay()+6)%7));
   let week="";
   for(let i=0;i<7;i++){
@@ -291,7 +373,7 @@ function renderMain(){
     const items=dayItems(selected).filter(i=>i.mealId===m.id);
     const mk=items.reduce((s,i)=>s+i.kcal100*i.grams/100,0);
     const rows=items.map(i=>`<button class="item" onclick="openEdit('${i.id}')">
-      <div><div class="item-name">${esc(i.name)}</div><div class="item-g">${i.grams} г</div></div>
+      <div class="item-info"><div class="item-name">${esc(i.name)}</div><div class="item-g">${i.grams} г</div></div>
       <div class="item-k">${R(i.kcal100*i.grams/100)}</div></button>`).join("");
     return `<div class="meal"><div class="meal-head"><div><span class="meal-title">${m.label}</span>${mk>0?`<span class="meal-kcal">${R(mk)} ккал</span>`:""}</div>
       <button class="add-btn" onclick="openAdd('${m.id}')">+</button></div>
@@ -300,10 +382,10 @@ function renderMain(){
 
   document.getElementById("app").innerHTML=`
   <div class="header">
-    <button class="h-date" onclick="openCalendar()">
+    <div class="h-date">
       <div class="h-title">${title}</div>
-      <div class="h-sub">${MONTHS_NOM[selected.getMonth()]} ${selected.getFullYear()} · календарь ▾</div>
-    </button>
+      <div class="h-sub">${MONTHS_NOM[selected.getMonth()]} ${selected.getFullYear()}</div>
+    </div>
     <div class="h-actions">
       <button class="chip" onclick="openGoal()">цель ${S.goal}</button>
       <button class="chip" onclick="openSettings()">⚙</button>
@@ -312,7 +394,7 @@ function renderMain(){
   <div class="week">${week}</div>
   <div class="summary">
     <div class="ringwrap">
-      <svg width="190" height="190" viewBox="0 0 190 190">
+      <svg viewBox="0 0 190 190">
         <circle cx="95" cy="95" r="84" fill="none" stroke="var(--surface)" stroke-width="11"/>
         <circle cx="95" cy="95" r="84" fill="none" stroke="${over?"var(--warn)":"var(--accent)"}" stroke-width="11"
           stroke-linecap="round" stroke-dasharray="${CIRC}" stroke-dashoffset="${CIRC*(1-pct)}"
@@ -326,20 +408,93 @@ function renderMain(){
     <div class="macros">${macros}</div>
   </div>
   <div class="meals">${meals}
-    <div class="footnote">Данные хранятся на этом телефоне. AI-оценка калорий по фото — приблизительная.</div>
+    <div class="footnote">Данные хранятся на этом телефоне. AI-оценка по фото — приблизительная.</div>
   </div>`;
 }
+window.pickDay=iso=>{ selected=new Date(iso); render(); };
 
-window.pickDay=iso=>{ selected=new Date(iso); renderMain(); };
+// ───────────────── Вкладка «Календарь»
+function renderCalendarPage(){
+  const today=new Date();
+  const startPad=(new Date(calView.getFullYear(),calView.getMonth(),1).getDay()+6)%7;
+  const daysIn=new Date(calView.getFullYear(),calView.getMonth()+1,0).getDate();
+  let cells="";
+  let monthTotal=0, daysLogged=0, daysOk=0;
+  for(let i=0;i<startPad;i++) cells+="<div></div>";
+  for(let n=1;n<=daysIn;n++){
+    const d=new Date(calView.getFullYear(),calView.getMonth(),n);
+    const k=dayKcal(d), ratio=k/S.goal;
+    if(k>0){ monthTotal+=k; daysLogged++; if(ratio<=1.1) daysOk++; }
+    const future=d>today&&!same(d,today);
+    const cls="cal-day"+(same(d,today)?" today":"")+(future?" future":"");
+    const kcls=k===0?"none":ratio>1.1?"over":"ok";
+    cells+=`<button class="${cls}" onclick="openDayDetails('${d.toISOString()}')">
+      <span class="n">${n}</span><span class="k ${kcls}">${k>0?R(k):"·"}</span></button>`;
+  }
+  const avg=daysLogged?R(monthTotal/daysLogged):0;
+  document.getElementById("app").innerHTML=`
+  <div class="header">
+    <div class="h-date"><div class="h-title">Календарь</div>
+      <div class="h-sub">калории по дням · нажмите на день</div></div>
+    <div class="h-actions"><button class="chip" onclick="openGoal()">цель ${S.goal}</button></div>
+  </div>
+  <div class="cal-page">
+    <div class="cal-nav">
+      <button class="cal-arrow" onclick="calShift(-1)">‹</button>
+      <div class="cal-month">${MONTHS_NOM[calView.getMonth()]} ${calView.getFullYear()}</div>
+      <button class="cal-arrow" onclick="calShift(1)">›</button>
+    </div>
+    <div class="cal-grid" style="margin-bottom:6px">${WD.map(w=>`<div class="cal-wd">${w}</div>`).join("")}</div>
+    <div class="cal-grid">${cells}</div>
+    <div class="legend"><span><i style="background:var(--accent)"></i>в норме</span><span><i style="background:var(--warn)"></i>перебор (&gt;110% цели)</span></div>
+    <div class="month-stats">
+      <div class="ms-card"><div class="ms-num">${avg||"—"}</div><div class="ms-lbl">в среднем ккал/день</div></div>
+      <div class="ms-card"><div class="ms-num">${daysLogged}</div><div class="ms-lbl">дней с записями</div></div>
+      <div class="ms-card"><div class="ms-num">${daysLogged?daysOk:"—"}</div><div class="ms-lbl">дней в норме</div></div>
+    </div>
+  </div>`;
+}
+window.calShift=d=>{ calView=new Date(calView.getFullYear(),calView.getMonth()+d,1); render(); };
+
+// ── Детали дня
+window.openDayDetails=iso=>{
+  const d=new Date(iso);
+  const t=totals(d);
+  const today=new Date();
+  const title=same(d,today)?"Сегодня":d.getDate()+" "+MONTHS[d.getMonth()];
+  let body="";
+  if(t.kcal===0){
+    body=`<div class="empty-msg">В этот день записей нет.</div>`;
+  } else {
+    const over=t.kcal>S.goal;
+    body=`<div class="dd-total"><span class="dd-big" style="${over?"color:var(--warn)":""}">${R(t.kcal)}</span>
+      <span class="dd-of">из ${S.goal} ккал${over?" · +"+R(t.kcal-S.goal):""}</span></div>
+    <div class="dd-macros">
+      <div class="dd-m"><b>${R(t.p)}</b><span>белки, г</span></div>
+      <div class="dd-m"><b>${R(t.f)}</b><span>жиры, г</span></div>
+      <div class="dd-m"><b>${R(t.c)}</b><span>углеводы, г</span></div>
+    </div>`;
+    MEALS.forEach(m=>{
+      const items=dayItems(d).filter(i=>i.mealId===m.id);
+      if(!items.length) return;
+      const mk=items.reduce((s,i)=>s+i.kcal100*i.grams/100,0);
+      body+=`<div class="dd-meal"><div class="dd-meal-t">${m.label} · ${R(mk)} ккал</div>
+        ${items.map(i=>`<div class="dd-row"><span class="nm">${esc(i.name)}</span><span class="gr">${i.grams} г</span><span class="kc">${R(i.kcal100*i.grams/100)}</span></div>`).join("")}</div>`;
+    });
+  }
+  showSheet(`<div class="sheet-title" style="margin-bottom:8px">${title}</div>${body}
+    <button class="primary dark" style="margin-top:10px" onclick="gotoDiary('${iso}')">Открыть в дневнике</button>`);
+};
+window.gotoDiary=iso=>{ selected=new Date(iso); page="diary"; closeSheet(); };
 
 // ───────────────── Шторки
 function showSheet(html){ document.getElementById("sheet-root").innerHTML=
   `<div class="overlay" onclick="if(event.target===this)closeSheet()"><div class="sheet"><div class="grab"></div><div class="sheet-body">${html}</div></div></div>`; }
-window.closeSheet=()=>{ document.getElementById("sheet-root").innerHTML=""; addCtx=null; editCtx=null; aiCtx=null; goalTmp=null; renderMain(); };
+window.closeSheet=()=>{ stopScan(); document.getElementById("sheet-root").innerHTML=""; addCtx=null; editCtx=null; aiCtx=null; scanCtx=null; goalTmp=null; render(); };
 
 // ── Добавление
-window.openAdd=mealId=>{ addCtx={mealId,tab:"search",query:"",picked:null}; aiCtx={status:"idle",items:[],error:null}; renderAdd(); };
-window.setTab=t=>{ addCtx.tab=t; renderAdd(); };
+window.openAdd=mealId=>{ addCtx={mealId,tab:"search",query:"",picked:null}; aiCtx={status:"idle",items:[],error:null}; scanCtx={status:"idle"}; renderAdd(); };
+window.setTab=t=>{ stopScan(); addCtx.tab=t; if(t==="scan"&&scanCtx.status==="scanning") scanCtx={status:"idle"}; renderAdd(); };
 window.setQuery=v=>{ addCtx.query=v; renderSearchList(); };
 window.pickFood=id=>{ const f=FOOD_DB.find(x=>x.id===id); addCtx.picked={food:f,grams:f.portion}; renderAdd(); };
 window.backToSearch=()=>{ addCtx.picked=null; renderAdd(); };
@@ -349,14 +504,14 @@ window.confirmPicked=()=>{ const p=addCtx.picked,f=p.food; addItem(addCtx.mealId
 
 function gramsPickerHTML(name,grams,portion,kcal100,opts){
   const kcal=R(kcal100*grams/100);
-  const halves=[R(portion/2),portion,portion*2];
-  return `${opts.back?`<button class="back-link" onclick="${opts.back}">← назад к поиску</button>`:""}
-  <div style="font-size:17px;font-weight:600">${esc(name)}</div>
-  <div style="font-size:13px;color:var(--muted);margin:2px 0 18px">${R(kcal100)} ккал на 100 г</div>
+  const halves=[Math.max(5,R(portion/2)),portion,portion*2];
+  return `${opts.back?`<button class="back-link" onclick="${opts.back}">← назад</button>`:""}
+  <div style="font-size:17px;font-weight:600;line-height:1.3">${esc(name)}</div>
+  <div style="font-size:13px;color:var(--muted);margin:3px 0 18px">${R(kcal100)} ккал на 100 г</div>
   <div class="grams-row">
     <button class="stepper" onclick="${opts.bump}(-25)">−25</button>
     <button class="stepper" onclick="${opts.bump}(-5)">−5</button>
-    <div style="min-width:110px;text-align:center"><div class="grams-num">${grams}</div><div class="grams-lbl">граммов</div></div>
+    <div class="grams-mid"><div class="grams-num">${grams}</div><div class="grams-lbl">граммов</div></div>
     <button class="stepper" onclick="${opts.bump}(5)">+5</button>
     <button class="stepper" onclick="${opts.bump}(25)">+25</button>
   </div>
@@ -372,37 +527,39 @@ function renderSearchList(){
   const q=addCtx.query.trim().toLowerCase();
   const res=q?FOOD_DB.filter(f=>f.name.toLowerCase().includes(q)).slice(0,30):FOOD_DB.slice(0,12);
   box.innerHTML=res.length?res.map(f=>`<button class="food-row" onclick="pickFood('${f.id}')">
-    <div><div class="food-name">${esc(f.name)}</div><div class="food-bju">Б ${f.p} · Ж ${f.f} · У ${f.c}</div></div>
+    <div class="food-info"><div class="food-name">${esc(f.name)}</div><div class="food-bju">Б ${f.p} · Ж ${f.f} · У ${f.c}</div></div>
     <div class="food-k"><b>${f.kcal}</b> /100 г</div></button>`).join("")
-  :`<div class="empty-msg">Ничего не нашлось. Попробуйте сфотографировать — AI оценит сам.</div>`;
+  :`<div class="empty-msg">Ничего не нашлось.<br>Попробуйте фото или штрих-код.</div>`;
 }
 
 function renderAdd(){
   const meal=MEALS.find(m=>m.id===addCtx.mealId);
   let body="";
   if(addCtx.tab==="search"){
-    if(addCtx.picked){
-      body=gramsPickerHTML(addCtx.picked.food.name,addCtx.picked.grams,addCtx.picked.food.portion,addCtx.picked.food.kcal,
-        {back:"backToSearch()",bump:"bumpPicked",setG:"setPickedG",confirm:"confirmPicked()"});
-    } else {
-      body=`<input class="search-input" placeholder="Гречка, борщ, сырники…" value="${esc(addCtx.query)}" oninput="setQuery(this.value)" autofocus>
+    body=addCtx.picked
+      ? gramsPickerHTML(addCtx.picked.food.name,addCtx.picked.grams,addCtx.picked.food.portion,addCtx.picked.food.kcal,
+          {back:"backToSearch()",bump:"bumpPicked",setG:"setPickedG",confirm:"confirmPicked()"})
+      : `<input class="search-input" type="search" placeholder="Гречка, борщ, сырники…" value="${esc(addCtx.query)}" oninput="setQuery(this.value)">
         <div id="searchList"></div>`;
-    }
-  } else {
+  } else if(addCtx.tab==="photo"){
     body=renderPhotoBody();
+  } else {
+    body=renderScanBody();
   }
   showSheet(`<div class="sheet-title">Добавить в ${meal.label.toLowerCase()}</div>
     <div class="tabs">
       <button class="tab${addCtx.tab==="search"?" on":""}" onclick="setTab('search')">Поиск</button>
       <button class="tab${addCtx.tab==="photo"?" on":""}" onclick="setTab('photo')">Фото · AI</button>
+      <button class="tab${addCtx.tab==="scan"?" on":""}" onclick="setTab('scan')">Штрих-код</button>
     </div>${body}`);
-  if(addCtx.tab==="search"&&!addCtx.picked){ renderSearchList(); const inp=document.querySelector(".search-input"); if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);} }
+  if(addCtx.tab==="search"&&!addCtx.picked) renderSearchList();
+  if(addCtx.tab==="scan"&&scanCtx.status==="scanning") startScan();
 }
 
-// ── Фото / AI
+// ───────────────── Фото / AI
 function renderPhotoBody(){
   if(!S.apiKey){
-    return `<div style="text-align:center;padding:30px 10px">
+    return `<div style="text-align:center;padding:26px 6px">
       <div class="photo-emoji">🔑</div>
       <div class="photo-t">Нужен бесплатный AI-ключ</div>
       <div class="photo-s" style="margin-bottom:18px">Один раз вставьте ключ Groq или Gemini в настройках — и фото-распознавание заработает</div>
@@ -414,7 +571,7 @@ function renderPhotoBody(){
       <div class="photo-s">AI определит блюда, граммовку и калории</div></button>`;
   }
   if(aiCtx.status==="loading"){
-    return `<div style="text-align:center;padding:44px 20px">
+    return `<div style="text-align:center;padding:40px 16px">
       <div style="font-size:30px;animation:pulse 1.2s infinite">🔎</div>
       <div class="photo-t" style="margin-top:12px">Анализирую фото…</div>
       <div class="photo-s">Обычно 5–10 секунд</div></div>`;
@@ -423,14 +580,13 @@ function renderPhotoBody(){
     return `<div class="err">${esc(aiCtx.error)}</div>
       <button class="primary dark" onclick="resetAI()">Попробовать снова</button>`;
   }
-  // done
   const total=aiCtx.items.filter(i=>i.checked).reduce((s,i)=>s+i.kcal100*i.grams/100,0);
   const any=aiCtx.items.some(i=>i.checked);
   const rows=aiCtx.items.map((it,idx)=>`<div class="ai-item${it.checked?"":" off"}">
     <div class="ai-head">
       <button class="ai-check" onclick="toggleAI(${idx})"><span class="cb${it.checked?" on":""}">${it.checked?"✓":""}</span>
-        <span style="font-size:14.5px;font-weight:500">${esc(it.name)}</span></button>
-      <span style="font-size:14px;font-weight:600">${R(it.kcal100*it.grams/100)} ккал</span>
+        <span class="nm">${esc(it.name)}</span></button>
+      <span style="font-size:14px;font-weight:600;flex-shrink:0">${R(it.kcal100*it.grams/100)} ккал</span>
     </div>
     ${it.checked?`<div class="ai-grams">
       <button class="stepper sm" onclick="bumpAI(${idx},-25)">−25</button>
@@ -526,15 +682,136 @@ async function analyzePhoto(file){
   if(addCtx) renderAdd();
 }
 
-// ── Редактирование записи
+// ───────────────── Штрих-код
+function renderScanBody(){
+  const c=scanCtx;
+  if(c.status==="idle"){
+    return `<button class="photo-drop" onclick="beginScan()">
+      <div class="photo-emoji">𝄃𝄂𝄀𝄁𝄃</div><div class="photo-t">Сканировать штрих-код</div>
+      <div class="photo-s">Наведите камеру на код с упаковки —<br>калории подтянутся из базы Open Food Facts</div></button>
+    <div class="divider">или введите код вручную</div>
+    <div class="manual-row">
+      <input id="manualCode" type="text" inputmode="numeric" placeholder="4601234567890">
+      <button onclick="manualLookup()">Найти</button>
+    </div>`;
+  }
+  if(c.status==="scanning"){
+    return `<div class="scan-frame"><video id="scanVideo" playsinline muted></video><div class="scan-line"></div></div>
+    <div class="scan-hint">Держите код в кадре — распознается автоматически</div>
+    <button class="ghost" onclick="cancelScan()">Отмена</button>
+    <div class="divider">или введите код вручную</div>
+    <div class="manual-row">
+      <input id="manualCode" type="text" inputmode="numeric" placeholder="4601234567890">
+      <button onclick="manualLookup()">Найти</button>
+    </div>`;
+  }
+  if(c.status==="loading"){
+    return `<div style="text-align:center;padding:40px 16px">
+      <div style="font-size:30px;animation:pulse 1.2s infinite">🔎</div>
+      <div class="photo-t" style="margin-top:12px">Ищу продукт…</div>
+      <div class="photo-s">Код ${esc(c.code||"")}</div></div>`;
+  }
+  if(c.status==="error"){
+    return `<div class="err">${esc(c.error)}</div>
+      <button class="primary dark" onclick="resetScan()">Сканировать снова</button>
+      <button class="ghost" onclick="setTab('search')">Поискать вручную</button>`;
+  }
+  // found
+  const p=c.product;
+  return gramsPickerHTML(p.name,c.grams,p.portion,p.kcal100,
+    {back:"resetScan()",bump:"bumpScan",setG:"setScanG",confirm:"confirmScan()"});
+}
+window.beginScan=()=>{ scanCtx={status:"scanning"}; renderAdd(); };
+window.cancelScan=()=>{ stopScan(); scanCtx={status:"idle"}; renderAdd(); };
+window.resetScan=()=>{ stopScan(); scanCtx={status:"idle"}; renderAdd(); };
+window.bumpScan=d=>{ scanCtx.grams=Math.max(5,scanCtx.grams+d); renderAdd(); };
+window.setScanG=g=>{ scanCtx.grams=g; renderAdd(); };
+window.confirmScan=()=>{ const p=scanCtx.product; addItem(addCtx.mealId,p.name,scanCtx.grams,p.kcal100,p.p100,p.f100,p.c100); closeSheet(); };
+window.manualLookup=()=>{
+  const v=(document.getElementById("manualCode").value||"").replace(/\D/g,"");
+  if(v.length<8){ alert("Введите код полностью (8–13 цифр)"); return; }
+  stopScan(); lookupBarcode(v);
+};
+
+function stopScan(){
+  if(scanTimer){ clearInterval(scanTimer); scanTimer=null; }
+  if(scanStream){ scanStream.getTracks().forEach(t=>t.stop()); scanStream=null; }
+  if(zxingReader){ try{ zxingReader.reset(); }catch(e){} zxingReader=null; }
+}
+
+function loadZXing(){
+  return new Promise((res,rej)=>{
+    if(window.ZXing) return res();
+    const s=document.createElement("script");
+    s.src="https://cdnjs.cloudflare.com/ajax/libs/zxing-library/0.21.3/umd/index.min.js";
+    s.onload=()=>res(); s.onerror=()=>rej(new Error("zxing load fail"));
+    document.head.appendChild(s);
+  });
+}
+
+async function startScan(){
+  const video=document.getElementById("scanVideo"); if(!video)return;
+  try{
+    if("BarcodeDetector" in window){
+      scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}});
+      video.srcObject=scanStream; await video.play();
+      const det=new BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e","code_128"]});
+      scanTimer=setInterval(async()=>{
+        if(!document.getElementById("scanVideo")) return stopScan();
+        try{
+          const codes=await det.detect(video);
+          if(codes.length){ const v=codes[0].rawValue; stopScan(); lookupBarcode(v); }
+        }catch(e){}
+      },350);
+    } else {
+      await loadZXing();
+      zxingReader=new ZXing.BrowserMultiFormatReader();
+      zxingReader.decodeFromVideoDevice(undefined,"scanVideo",(result)=>{
+        if(result){ const v=result.getText(); stopScan(); lookupBarcode(v); }
+      });
+    }
+  }catch(e){
+    stopScan();
+    scanCtx={status:"error",error:"Нет доступа к камере. Разрешите доступ в настройках браузера или введите код вручную."};
+    if(addCtx) renderAdd();
+  }
+}
+
+async function lookupBarcode(code){
+  scanCtx={status:"loading",code}; if(addCtx) renderAdd();
+  try{
+    const r=await fetch("https://world.openfoodfacts.org/api/v2/product/"+encodeURIComponent(code)+".json?fields=product_name,product_name_ru,brands,nutriments,serving_quantity");
+    const data=await r.json();
+    if(data.status!==1||!data.product) throw new Error("notfound");
+    const pr=data.product, nu=pr.nutriments||{};
+    let kcal100=+nu["energy-kcal_100g"]||+nu["energy-kcal"]||0;
+    if(!kcal100&&nu["energy_100g"]) kcal100=nu["energy_100g"]/4.184;
+    if(!kcal100) throw new Error("nodata");
+    const name=(pr.product_name_ru||pr.product_name||"Продукт")+(pr.brands?" · "+pr.brands.split(",")[0].trim():"");
+    const serving=R(+pr.serving_quantity)||100;
+    scanCtx={status:"found",code,grams:serving,product:{
+      name, kcal100:R(kcal100*10)/10, portion:serving,
+      p100:+nu["proteins_100g"]||0, f100:+nu["fat_100g"]||0, c100:+nu["carbohydrates_100g"]||0,
+    }};
+  }catch(e){
+    scanCtx={status:"error",code,error:e.message==="notfound"
+      ?"Продукт с кодом "+code+" не найден в базе Open Food Facts. Попробуйте поиск или фото."
+      :e.message==="nodata"
+      ?"Продукт найден, но без данных о калориях. Попробуйте поиск или фото."
+      :"Ошибка сети. Проверьте интернет и попробуйте снова."};
+  }
+  if(addCtx) renderAdd();
+}
+
+// ───────────────── Редактирование записи
 window.openEdit=id=>{
   const it=dayItems(selected).find(x=>x.id===id); if(!it)return;
-  editCtx={item:{...it}};
+  editCtx={item:{...it},basePortion:it.grams};
   renderEdit();
 };
 function renderEdit(){
   const it=editCtx.item;
-  showSheet(gramsPickerHTML(it.name,it.grams,it.grams<=10?10:it.grams, it.kcal100,
+  showSheet(gramsPickerHTML(it.name,it.grams,editCtx.basePortion,it.kcal100,
     {bump:"bumpEdit",setG:"setEditG",confirm:"confirmEdit()",del:"deleteEdit()",confirmLabel:"Сохранить"}));
 }
 window.bumpEdit=d=>{ editCtx.item.grams=Math.max(5,editCtx.item.grams+d); renderEdit(); };
@@ -542,34 +819,7 @@ window.setEditG=g=>{ editCtx.item.grams=g; renderEdit(); };
 window.confirmEdit=()=>{ updateGrams(editCtx.item.id,editCtx.item.grams); closeSheet(); };
 window.deleteEdit=()=>{ removeItem(editCtx.item.id); closeSheet(); };
 
-// ── Календарь
-window.openCalendar=()=>{ calView=new Date(selected.getFullYear(),selected.getMonth(),1); renderCalendar(); };
-window.calShift=d=>{ calView=new Date(calView.getFullYear(),calView.getMonth()+d,1); renderCalendar(); };
-window.calPick=iso=>{ selected=new Date(iso); closeSheet(); };
-function renderCalendar(){
-  const today=new Date();
-  const startPad=(new Date(calView.getFullYear(),calView.getMonth(),1).getDay()+6)%7;
-  const daysIn=new Date(calView.getFullYear(),calView.getMonth()+1,0).getDate();
-  let cells="";
-  for(let i=0;i<startPad;i++) cells+="<div></div>";
-  for(let n=1;n<=daysIn;n++){
-    const d=new Date(calView.getFullYear(),calView.getMonth(),n);
-    const k=dayKcal(d), ratio=k/S.goal;
-    const cls="cal-day"+(same(d,selected)?" sel":"")+(same(d,today)?" today":"");
-    cells+=`<button class="${cls}" onclick="calPick('${d.toISOString()}')">
-      <span class="n">${n}</span>
-      <span class="d" style="background:${k===0?"transparent":ratio>1.1?"var(--warn)":"var(--accent)"}"></span></button>`;
-  }
-  showSheet(`<div class="cal-nav">
-      <button class="cal-arrow" onclick="calShift(-1)">‹</button>
-      <div class="cal-month">${MONTHS_NOM[calView.getMonth()]} ${calView.getFullYear()}</div>
-      <button class="cal-arrow" onclick="calShift(1)">›</button></div>
-    <div class="cal-grid" style="margin-bottom:6px">${WD.map(w=>`<div class="cal-wd">${w}</div>`).join("")}</div>
-    <div class="cal-grid">${cells}</div>
-    <div class="legend"><span><i style="background:var(--accent)"></i>в норме</span><span><i style="background:var(--warn)"></i>перебор</span></div>`);
-}
-
-// ── Цель
+// ───────────────── Цель
 window.openGoal=()=>{ goalTmp=S.goal; renderGoal(); };
 window.bumpGoal=d=>{ goalTmp=Math.max(800,goalTmp+d); renderGoal(); };
 window.setGoalV=g=>{ goalTmp=g; renderGoal(); };
@@ -585,7 +835,7 @@ function renderGoal(){
     <button class="primary dark" onclick="saveGoal()">Готово</button>`);
 }
 
-// ── Настройки AI
+// ───────────────── Настройки AI
 window.openSettings=()=>renderSettings();
 window.setProvider=p=>{ S.provider=p; persist(); renderSettings(); };
 window.saveSettings=()=>{ S.apiKey=document.getElementById("keyInput").value.trim(); persist(); closeSheet(); };
@@ -606,10 +856,9 @@ function renderSettings(){
     <button class="primary dark" style="margin-top:20px" onclick="saveSettings()">Сохранить</button>`);
 }
 
-// ── Service worker
+// ───────────────── Запуск
 if("serviceWorker" in navigator){ window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{})); }
-
-renderMain();
+render();
 </script>
 </body>
 </html>
