@@ -230,6 +230,7 @@
 <div id="sheet-root"></div>
 <nav class="nav" id="nav"></nav>
 <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none">
+<input type="file" id="barcodePhotoInput" accept="image/*" capture="environment" style="display:none">
 
 <script>
 "use strict";
@@ -553,7 +554,7 @@ function renderAdd(){
       <button class="tab${addCtx.tab==="scan"?" on":""}" onclick="setTab('scan')">Штрих-код</button>
     </div>${body}`);
   if(addCtx.tab==="search"&&!addCtx.picked) renderSearchList();
-  if(addCtx.tab==="scan"&&scanCtx.status==="scanning") startScan();
+  if(addCtx.tab==="scan"&&scanCtx.status==="scanning") attachScan();
 }
 
 // ───────────────── Фото / AI
@@ -685,25 +686,29 @@ async function analyzePhoto(file){
 // ───────────────── Штрих-код
 function renderScanBody(){
   const c=scanCtx;
+  const manualBlock=`<div class="divider">или введите код вручную</div>
+    <div class="manual-row">
+      <input id="manualCode" type="text" inputmode="numeric" placeholder="4601234567890">
+      <button onclick="manualLookup()">Найти</button>
+    </div>`;
   if(c.status==="idle"){
     return `<button class="photo-drop" onclick="beginScan()">
-      <div class="photo-emoji">𝄃𝄂𝄀𝄁𝄃</div><div class="photo-t">Сканировать штрих-код</div>
-      <div class="photo-s">Наведите камеру на код с упаковки —<br>калории подтянутся из базы Open Food Facts</div></button>
-    <div class="divider">или введите код вручную</div>
-    <div class="manual-row">
-      <input id="manualCode" type="text" inputmode="numeric" placeholder="4601234567890">
-      <button onclick="manualLookup()">Найти</button>
-    </div>`;
+      <div class="photo-emoji">𝄃𝄂𝄀𝄁𝄃</div><div class="photo-t">Включить камеру</div>
+      <div class="photo-s">Приложение запросит доступ к камере —<br>нажмите «Разрешить»</div></button>
+    <button class="ghost" onclick="document.getElementById('barcodePhotoInput').click()">📷 Или сфотографировать штрих-код</button>
+    ${manualBlock}`;
+  }
+  if(c.status==="requesting"){
+    return `<div style="text-align:center;padding:40px 16px">
+      <div style="font-size:30px;animation:pulse 1.2s infinite">📷</div>
+      <div class="photo-t" style="margin-top:12px">Запрашиваю доступ к камере…</div>
+      <div class="photo-s">Если появилось окно с вопросом — нажмите «Разрешить»</div></div>`;
   }
   if(c.status==="scanning"){
-    return `<div class="scan-frame"><video id="scanVideo" playsinline muted></video><div class="scan-line"></div></div>
+    return `<div class="scan-frame"><video id="scanVideo" playsinline muted autoplay></video><div class="scan-line"></div></div>
     <div class="scan-hint">Держите код в кадре — распознается автоматически</div>
     <button class="ghost" onclick="cancelScan()">Отмена</button>
-    <div class="divider">или введите код вручную</div>
-    <div class="manual-row">
-      <input id="manualCode" type="text" inputmode="numeric" placeholder="4601234567890">
-      <button onclick="manualLookup()">Найти</button>
-    </div>`;
+    ${manualBlock}`;
   }
   if(c.status==="loading"){
     return `<div style="text-align:center;padding:40px 16px">
@@ -712,16 +717,118 @@ function renderScanBody(){
       <div class="photo-s">Код ${esc(c.code||"")}</div></div>`;
   }
   if(c.status==="error"){
-    return `<div class="err">${esc(c.error)}</div>
-      <button class="primary dark" onclick="resetScan()">Сканировать снова</button>
-      <button class="ghost" onclick="setTab('search')">Поискать вручную</button>`;
+    return `<div class="err">${c.error}</div>
+      ${c.retry?`<button class="primary dark" onclick="beginScan()">Запросить доступ ещё раз</button>`
+               :`<button class="primary dark" onclick="resetScan()">Попробовать снова</button>`}
+      <button class="ghost" onclick="document.getElementById('barcodePhotoInput').click()">📷 Сфотографировать штрих-код</button>
+      ${manualBlock}`;
   }
   // found
   const p=c.product;
   return gramsPickerHTML(p.name,c.grams,p.portion,p.kcal100,
     {back:"resetScan()",bump:"bumpScan",setG:"setScanG",confirm:"confirmScan()"});
 }
-window.beginScan=()=>{ scanCtx={status:"scanning"}; renderAdd(); };
+
+function camErrText(e){
+  const n=e&&e.name?e.name:"";
+  if(n==="NotAllowedError"||n==="PermissionDeniedError"||n==="SecurityError"){
+    return {retry:true, error:
+      "Доступ к камере заблокирован.<br><br>"+
+      "<b>Android (Chrome):</b> значок замка/настроек слева от адреса → Разрешения → Камера → Разрешить. Если приложение установлено на главный экран: Настройки телефона → Приложения → ккал → Разрешения → Камера.<br><br>"+
+      "<b>iPhone (Safari):</b> Настройки → Приложения → Safari → Камера → «Спрашивать» или «Разрешить», затем перезапустите приложение.<br><br>"+
+      "Или просто сфотографируйте код кнопкой ниже — для этого разрешение не нужно."};
+  }
+  if(n==="NotFoundError"||n==="OverconstrainedError") return {retry:false, error:"Камера не найдена на этом устройстве. Сфотографируйте код или введите его вручную."};
+  if(n==="NotReadableError") return {retry:true, error:"Камера занята другим приложением. Закройте его и попробуйте снова."};
+  return {retry:true, error:"Не удалось включить камеру. Попробуйте ещё раз, сфотографируйте код или введите его вручную."};
+}
+
+window.beginScan=async()=>{
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+    scanCtx={status:"error",retry:false,error:"В этом режиме камера недоступна. Сфотографируйте штрих-код кнопкой ниже или введите код вручную."};
+    renderAdd(); return;
+  }
+  scanCtx={status:"requesting"}; renderAdd();
+  try{
+    // именно этот вызов показывает системный запрос «Разрешить доступ к камере?»
+    scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}},audio:false});
+  }catch(e){
+    stopScan();
+    const t=camErrText(e);
+    scanCtx={status:"error",retry:t.retry,error:t.error};
+    if(addCtx) renderAdd();
+    return;
+  }
+  if(!addCtx||addCtx.tab!=="scan"){ stopScan(); return; }
+  scanCtx={status:"scanning"}; renderAdd();
+  attachScan();
+};
+
+async function attachScan(){
+  const video=document.getElementById("scanVideo");
+  if(!video||!scanStream) return;
+  try{
+    video.srcObject=scanStream;
+    await video.play().catch(()=>{});
+    if("BarcodeDetector" in window){
+      const det=new BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e","code_128"]});
+      scanTimer=setInterval(async()=>{
+        if(!document.getElementById("scanVideo")) return stopScan();
+        try{
+          const codes=await det.detect(video);
+          if(codes.length){ const v=codes[0].rawValue; stopScan(); lookupBarcode(v); }
+        }catch(e){}
+      },350);
+    } else {
+      await loadZXing();
+      zxingReader=new ZXing.BrowserMultiFormatReader();
+      await zxingReader.decodeFromStream(scanStream,video,(result)=>{
+        if(result){ const v=result.getText(); stopScan(); lookupBarcode(v); }
+      });
+    }
+  }catch(e){
+    stopScan();
+    scanCtx={status:"error",retry:false,error:"Камера включилась, но распознавание не запустилось. Сфотографируйте код кнопкой ниже — так тоже сработает."};
+    if(addCtx) renderAdd();
+  }
+}
+
+// Фолбэк: распознавание штрих-кода со снимка (не требует разрешения на камеру)
+document.getElementById("barcodePhotoInput").addEventListener("change",async e=>{
+  const f=e.target.files&&e.target.files[0]; e.target.value="";
+  if(!f||!addCtx) return;
+  stopScan();
+  scanCtx={status:"loading",code:""}; renderAdd();
+  try{
+    const url=URL.createObjectURL(f);
+    let code=null;
+    if("BarcodeDetector" in window){
+      try{
+        const img=new Image();
+        await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; img.src=url; });
+        const det=new BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e","code_128"]});
+        const codes=await det.detect(img);
+        if(codes.length) code=codes[0].rawValue;
+      }catch(err){}
+    }
+    if(!code){
+      await loadZXing();
+      const reader=new ZXing.BrowserMultiFormatReader();
+      try{ const result=await reader.decodeFromImageUrl(url); code=result.getText(); }
+      catch(err){ code=null; }
+    }
+    URL.revokeObjectURL(url);
+    if(code){ lookupBarcode(code); }
+    else {
+      scanCtx={status:"error",retry:false,error:"Код на фото не распознан. Снимите ближе и резче, чтобы полосы были чёткими, или введите цифры вручную."};
+      if(addCtx) renderAdd();
+    }
+  }catch(err){
+    scanCtx={status:"error",retry:false,error:"Не удалось обработать фото. Попробуйте снова или введите код вручную."};
+    if(addCtx) renderAdd();
+  }
+});
+
 window.cancelScan=()=>{ stopScan(); scanCtx={status:"idle"}; renderAdd(); };
 window.resetScan=()=>{ stopScan(); scanCtx={status:"idle"}; renderAdd(); };
 window.bumpScan=d=>{ scanCtx.grams=Math.max(5,scanCtx.grams+d); renderAdd(); };
@@ -747,34 +854,6 @@ function loadZXing(){
     s.onload=()=>res(); s.onerror=()=>rej(new Error("zxing load fail"));
     document.head.appendChild(s);
   });
-}
-
-async function startScan(){
-  const video=document.getElementById("scanVideo"); if(!video)return;
-  try{
-    if("BarcodeDetector" in window){
-      scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}});
-      video.srcObject=scanStream; await video.play();
-      const det=new BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e","code_128"]});
-      scanTimer=setInterval(async()=>{
-        if(!document.getElementById("scanVideo")) return stopScan();
-        try{
-          const codes=await det.detect(video);
-          if(codes.length){ const v=codes[0].rawValue; stopScan(); lookupBarcode(v); }
-        }catch(e){}
-      },350);
-    } else {
-      await loadZXing();
-      zxingReader=new ZXing.BrowserMultiFormatReader();
-      zxingReader.decodeFromVideoDevice(undefined,"scanVideo",(result)=>{
-        if(result){ const v=result.getText(); stopScan(); lookupBarcode(v); }
-      });
-    }
-  }catch(e){
-    stopScan();
-    scanCtx={status:"error",error:"Нет доступа к камере. Разрешите доступ в настройках браузера или введите код вручную."};
-    if(addCtx) renderAdd();
-  }
 }
 
 async function lookupBarcode(code){
